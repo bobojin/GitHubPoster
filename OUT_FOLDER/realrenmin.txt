@@ -1,0 +1,436 @@
+1647561682175025152 2023-04-16 11:24:49 +0000 <realrenmin> @oran_ge @op7418 非常好的问题，因为在cot出现之前，llm随着模型越来越大，解决复杂推理问题的能力一直没有随之提高。 cot的出现，让这一能力解锁，也是第一次提出能力‘涌现’这个观点。如果没有cot，单纯prompt大模型可能无法解决复杂问题。   https://t.co/nuNjFCc5Ld
+1647496582244323329 2023-04-16 07:06:08 +0000 <realrenmin> @dotey exactly！这其实就是咱们之前说的react那种工作方式。  确实很惊讶看到autogpt没有用。
+1647492383607488512 2023-04-16 06:49:27 +0000 <realrenmin> @dotey 宝玉老师好思路！这已经可能成为是一个对autohpt好的PR！  如果要把让autogpt按照step by step的步骤来做，像你说的，需要修改代码和参数改变它的prompt建立过程，需要让它分开生成thought和action，并且action依赖的memory要有当前的thought。
+1647489344154791937 2023-04-16 06:37:23 +0000 <realrenmin> @op7418 谢谢转发和鼓励！
+1647383646280769537 2023-04-15 23:37:22 +0000 <realrenmin> 13/ 最后感谢两位读者@thankswell4 和 @connglli 非常critical的指正和讨论，获益匪浅。  同样，此条thread有任何疑问和错误，欢迎指正，我们一起成长。  请关注@realrenmin， 我们一起学习NLP。
+1647383643793530881 2023-04-15 23:37:22 +0000 <realrenmin> 12/n 如此看来在阶段一和二，都不太符合CoT的一般步骤。  但运行结果显示，这种prompting方式是奏效的（虽然低效）  只能得出结论，LLM太难以理解了。
+1647383641188868098 2023-04-15 23:37:21 +0000 <realrenmin> 11/n 在阶段一，AutoGPT的memory为空，完全依赖一个静态的prompt message，没有显性的CoT  同时，CoT，step by step和ReAct的核心都是要具有针对当下action的thought。  但在阶段二，AutoGPT依赖的memory记录的是previous step的command result和thought， 似乎与当下的action联系没有那么强烈？
+1647383638114443266 2023-04-15 23:37:20 +0000 <realrenmin> 10/n step by step的核心步骤是把step by step生成的CoT反贴生成新的prompt来生成action，总而言之，llm被prompt了两次  而AutoGPT只prompt了一次，而且‘同时’ 生成了thought和action  这似乎跟step by step的步骤不同。
+1647383635119706112 2023-04-15 23:37:20 +0000 <realrenmin> 9/ AutoGPT的prompt 建立过程中有几个疑惑点  1：“Determine which next command to use, and respond using the format specified above:”  以及 GENERATE NEXT COMMAND JSON 能不能起到 ‘let‘s think step by step’的神奇作用？  2: AutoGPT到底有没有CoT？
+1647383632062066690 2023-04-15 23:37:19 +0000 <realrenmin> 8/n 所以第二阶段的prompt message为  "ai name/role/goals, + template + memory [json from previous step + result from previous command + postfix]  + postfix"  prompting LLM，再次 “同时” 生成 thought 和 command  接下来，是循环阶段二的动作，执行command，更新memory...
+1647383629444820992 2023-04-15 23:37:18 +0000 <realrenmin> 7/n 阶段二  假设用户选择执行生成的command，输入y postfix变为了：GENERATE NEXT COMMAND JSON  这个postfix连同执行command产生的结果，以及上一步生成的json一起更新了memory  memory = [json from previous step + result from previous command + postfix]
+1647383626932436992 2023-04-15 23:37:18 +0000 <realrenmin> 6/n  所以第一阶段的prompt message为  "ai name/role/goals + memory[空] + template + postfix"  prompting LLM， “同时” 生成了thought 和 command的json
+1647383623988043776 2023-04-15 23:37:17 +0000 <realrenmin> 5/n 阶段一  user input：ai name/role/goals memory为空 但值得注意的是，AutoGPT为prompt postfix设置了一个默认值： “Determine which next command to use, and respond using the format specified above:”
+1647383621437906947 2023-04-15 23:37:16 +0000 <realrenmin> 4/n 其余三个组成部分（user，postfix，memory）在不同的阶段都有变化，具体来说可以分为两个阶段：  生成第一个command的阶段（noted 阶段一） 第一个command执行完之后的阶段 （noted 阶段二）
+1647383618661257219 2023-04-15 23:37:16 +0000 <realrenmin> 3/n 这四个部分中，只有prompt template是不变的。  在上个thread中有介绍，AutoGPT的prompt template主要是要让llm生成带有thought和command键值的json，这样以来，command可以被容易地解析出来让用户执行。
+1647383615934963713 2023-04-15 23:37:15 +0000 <realrenmin> 2/n 根据AutoGPT的代码，粗略地画了它构建prompt message的流程图。  prompting llm是AutoGPT的关键，所以整个过程中它到底是怎样构建prompt message非常重要。  总的来说，四个部分构成了它的prompt message，分别为 user postfix memory template
+1647383612931870720 2023-04-15 23:37:14 +0000 <realrenmin> 关于AutoGPT的疑惑, 它到底有没有CoT?  昨天发了关于AutoGPT的thread，断言它的prompt没有CoT是它的致命缺陷。  今日重新思考了这个问题，并在两位读者的指正和讨论下，重新看了AutoGPT的代码，整理了一下思考，感觉昨天的结论下的有些不严谨。  那么AutoGPT到底有没有CoT?  🧵  https://t.co/9nZFFeIO2g
+1647333711262654469 2023-04-15 20:18:57 +0000 <realrenmin> @connglli @thankswell4 👍正在看它的PR.   我在想把我们的讨论的内容去测试一下，如果效果好就提交PR. anyway，很棒的讨论，再此感谢！
+1647324194302984194 2023-04-15 19:41:08 +0000 <realrenmin> @connglli @thankswell4 我再补充一个疑惑：它第一个command跟thought到底有多少关联？  按照它的代码流程，‘Determine which next command to use, and respond using the format specified above’之后，同时生成了thought 和command。此时的thought跟command有关系么？…
+1647316273993334784 2023-04-15 19:09:40 +0000 <realrenmin> @connglli @thankswell4 非常棒的补充和指正，一语中的，谢谢！  看完你的回复之后，又去看了一下代码 第一个context确实如你所说是默认的user input：‘Determine which next command to use, and respond using the format specified above’。 然后生成了thought和command。  用户选择执行之后，把input换成generate next…
+1647109299024347136 2023-04-15 05:27:13 +0000 <realrenmin> @WuPingJu 你就是那个让人如沐春风的😃
+1647109100235374594 2023-04-15 05:26:25 +0000 <realrenmin> @xv44586 🤣🤣🤣🤣🤣哈哈哈
+1647109022913265665 2023-04-15 05:26:07 +0000 <realrenmin> @tinyfool 谢谢！
+1647008657794646016 2023-04-14 22:47:18 +0000 <realrenmin> @dotey 谢谢宝玉老师！
+1647008245943345153 2023-04-14 22:45:40 +0000 <realrenmin> @mtrainier2020 太感谢了！！
+1647002228664795136 2023-04-14 22:21:45 +0000 <realrenmin> 写读书笔记一段时间了，收获了很多读者和评论。  在众多的评论中，有些鼓励让人人如沐春风，有些指正也让我获益匪浅。 但也有些评论，其实挺有道理的，但是字里行间透露着一种 ‘你这个傻x，啥也不懂’的攻击感觉。…
+1646995637815132161 2023-04-14 21:55:34 +0000 <realrenmin> @thankswell4 但是autogpt连zero-shot-cot都算不上，step by step的核心步骤是先zero-shot生成cot，然后粘回去建立新prompt，再做action，也就是说，action之前必须得有cot。…
+1646820286510014466 2023-04-14 10:18:47 +0000 <realrenmin> @thankswell4 谢谢这么认真的回复和评论！ 我同意你说的，LLM有没有推理能力不得而知，而COT作为text completion，帮助了LLM先生成推理然后做决断，客观上帮助了推理过程。 我不同意你的是，我不认为autoGPT跟langchain一样，autoGPT没有few shot让LLM生成thought，它虚无的evaluate constrain和zero…
+1646818789563203586 2023-04-14 10:12:50 +0000 <realrenmin> @Martinaaa5678 谢谢鼓励！目前写读书笔记是兴趣爱好，工作和爱好也可以结合，所以不怎么费功夫。另一方面，看到大家的鼓励和指正对自己来说也颇有益处，自己也会坚持写下去的😃
+1646817580366135296 2023-04-14 10:08:02 +0000 <realrenmin> @dThshuYL9pu3fz3 谢谢鼓励！我看成了神马东锡老师🤣
+1646660555145396224 2023-04-13 23:44:04 +0000 <realrenmin> @kentuckeytom 谢谢补充，对于一般的问答，cot或者step by step很容易加在系统中的并对end user隐藏，但对于调api这种任务不容易，我个人觉得应该显性的给几个例子才可以的。
+1646659906928254976 2023-04-13 23:41:29 +0000 <realrenmin> @panlvdengxiao 你的想法我觉得有道理，但我觉得起码得有一个cot作为few shot learning来instruct一下更好吧，不过既然是开源的，prompt message我们可以自己随便改，加个cot试试
+1646659305754488833 2023-04-13 23:39:06 +0000 <realrenmin> @Chinese_XU 我跟你的感觉一样，当我看到它的prompt message中的evaluation，满满的成功学大师的语气，那感觉是为正确调用api指明方向了，但好像太不够具体了
+1646658927558287360 2023-04-13 23:37:36 +0000 <realrenmin> @dotey 谢谢宝玉老师的鼓励！ 也是个人的理解，或许有不正确的地方，希望能够让大家一起讨论提高！
+1646638809919131648 2023-04-13 22:17:40 +0000 <realrenmin> 12/12 如果你喜欢我的读书笔记，请关注@realrenmin  最近感受是，每次的thread仿佛在写一篇小的综述，这一过程让我自己也获益匪浅，感谢我的读者的激励。  thread中有任何错误和疑问，欢迎指出，大家一起讨论，共同成长。
+1646638807293493248 2023-04-13 22:17:39 +0000 <realrenmin> 11/12 如果此时在此回看AutoGPT, 发现它在middle of no where，它是prompting的本质，既没有reinforcement learning的加持，又没有CoT，它像一个实习生，动力十足，但思维跟不上。  但CoT本质也是prompting，它是如此轻成本，如果AutoGPT引入CoT, 会更可怕。
+1646638804512686083 2023-04-13 22:17:38 +0000 <realrenmin> 10/12 在这一潮流中  CoT扮演了重要的角色，它解锁了模型涌现推理能力，帮助llm完成了对自身知识的潜能挖掘；  ReAct将CoT推进到了大模型运用外部工具的层面，弥补了大模型依赖预训练知识的局限性；  MM-ReAct进一步将拓展了语言模型的应用边界，超越了语言文字的范畴。
+1646638801694109697 2023-04-13 22:17:38 +0000 <realrenmin> 9/12 当我们回顾LLM的使用工具的发展，随着模型越来越大，带来的变化是： 1: 做fintune或用human feedback reinforcement learning越来越昂贵。 2: 大模型的涌现能力，让zero-shot/few-shot成为潮流。
+1646638797902471172 2023-04-13 22:17:37 +0000 <realrenmin> 8/12 ReAct的进阶MM-REACT  MM-REACT是ReAct的进阶，通过运用ReAct的思想，完成多模态复杂任务。  MM-REACT把ChatGPT作为智能coordinator，协调视觉专家模型完成任务，特别的是，MM-REACT显性地用thought/action/observation这种ReAct模式进行prompting。   https://t.co/68b2OWlhCy  https://t.co/SrlhxlEPSb
+1646638791028006912 2023-04-13 22:17:35 +0000 <realrenmin> 7/12 ReAct 将CoT动态地引入到LLM学习call api的过程中，用CoT大道至简的思想，让LLM在完成api calling这个decision making前，具有推理过程，轻量级地解决了模型学习api的问题。  有兴趣的读者可以去读我的ReAct读书笔记。
+1646638787840315393 2023-04-13 22:17:34 +0000 <realrenmin> 6/12 大语言模型学习使用工具和调用api的发展历程，大概以CoT和ReAct为界。  CoT和ReAct之前，大语言模型主要靠昂贵的human feedback来做reinfocement learning来学会call api。 例如 WebGPT: 让LLM学会调用bing search api  https://t.co/R7P6nuC92F  https://t.co/vkwo26I1d8
+1646638780215070720 2023-04-13 22:17:32 +0000 <realrenmin> 5/12 可以确定的是，AutoGPT的prompting 方式没有显性的引入CoT，所以没有解锁reasoning。  它只能严重依赖缓存做desicion making，一遍遍的重复action，有勇无谋，可以说它并没有真正在做reasoning。  在以token计费的背景下，这种局限性被放大，徒有炫酷，让一般开发者望而却步。
+1646638777446850565 2023-04-13 22:17:32 +0000 <realrenmin> 4/12 阅读我之前的CoT和ReAct的读者已经知道，大语言模型的推理（reasoning）是一种涌现行为，具体指: 只有在引入CoT之后，超过1000亿参数的大模型才能解锁reasoning能力。   https://t.co/nuNjFCcDAL
+1646638774405988352 2023-04-13 22:17:31 +0000 <realrenmin> 3/12 仔细看一下prompt message  亮点是，通过constraints和performance evaluations要求llm使用缓存，并强行要求输出json格式，键值包含了所谓的reasoning和planning，以及选中的command api。  这其中的reasoning引起了我的注意，它真的有在reasoning么？  https://t.co/a3JUrrtUdc
+1646638767669915648 2023-04-13 22:17:29 +0000 <realrenmin> 2/12  抛开炫酷的demo，AutoGPT最核心的代码，是prompt message的构成方式，即：  把用户输入的ai name/role/goals直接合并在它默认的prompt message中。  它的本质，还是在prompting。  construct full prompt message：  https://t.co/3v15hoDaO2  default prompt message：  https://t.co/Y3IWPhY1Z1  https://t.co/Gb6ClwVL0p
+1646638759256150017 2023-04-13 22:17:27 +0000 <realrenmin> 从AutoGPT谈起，看大语言模型使用工具的发展  这两天，推上最热话题莫过AutoGPT。  AutoGPT的目的是让大语言模型使用外部工具（例如google）完成复杂任务，这与我最近读的论文话题一致。  此thread读书笔记，从AutoGPT的源码出发谈论它的局限性，以及简短地总结几篇文章来看LLM使用工具的发展。  🧵 👇
+1646261867726139394 2023-04-12 21:19:49 +0000 <realrenmin> 🙀
+1646188804540182528 2023-04-12 16:29:30 +0000 <realrenmin> @circleghost0723 谢谢你的鼓励和认可！
+1646185540427956232 2023-04-12 16:16:32 +0000 <realrenmin> @hanliufluid @jaleverchen 我感觉还好！
+1646175961409355777 2023-04-12 15:38:28 +0000 <realrenmin> 非常感谢ReAct的第一作者对我读书笔记认可！
+1646144903984840705 2023-04-12 13:35:03 +0000 <realrenmin> @jaleverchen 主机：mac studio最低配版 主屏幕：32寸4K屏，主力写文章和程序 左右两个竖屏幕：27寸1080p屏，分别用来看文章和看terminal 两套键鼠，分别是magic keyboard+touch pad 以及mx mechanical+mx master 3s 灯是benq screenbar
+1646124246647570433 2023-04-12 12:12:58 +0000 <realrenmin> 闭关写了几天paper，发现似乎很久没有跟读者分享读书笔记了。这几天补上！  https://t.co/MGtVmHBJ58
+1645460350349844480 2023-04-10 16:14:53 +0000 <realrenmin> 祝大卖！
+1644992530591756289 2023-04-09 09:15:56 +0000 <realrenmin> 宝玉老师的这个thread写地言简意赅，好看好懂！
+1644979400318894080 2023-04-09 08:23:45 +0000 <realrenmin> @lidangzzz 欧洲适合家庭两个人都有不错的工作，每个人四五千欧，俩个人8千欧以上，生活非常很好
+1644979082747158529 2023-04-09 08:22:30 +0000 <realrenmin> @lidangzzz 二千欧不够基本生活
+1644976458249453568 2023-04-09 08:12:04 +0000 <realrenmin> @lidangzzz 穷人在哪里也不舒服
+1644976416809709569 2023-04-09 08:11:54 +0000 <realrenmin> @lidangzzz 其实北欧穷人也不舒服
+1644696898983411713 2023-04-08 13:41:12 +0000 <realrenmin> @ajohnymous2 感谢John和Tiny老师今天的分享，我先下麦带娃去了😃
+1644687800556572676 2023-04-08 13:05:03 +0000 <realrenmin> @ajohnymous2 我的麦貌似有点问题，先安心当听众😃
+1644642249068748803 2023-04-08 10:04:02 +0000 <realrenmin> @FMackenzie7 我个人必读论文list有： trasnformer：attention is all you need,  encoder blocks：BERT encoder-decoder blocks： BART decoder-blocks: GPT-1, 2, 3 prompt-based learning instruct tuning cot, react   YouTube的Mu Li老师讲的非常好 我自己也会逐步把这些论文写成thread
+1644591136596455424 2023-04-08 06:40:56 +0000 <realrenmin> @yhcnux 感谢你的分享！
+1644590902420152320 2023-04-08 06:40:00 +0000 <realrenmin> @mtrainier2020 再次感谢大佬转发和鼓励！
+1644472949502509059 2023-04-07 22:51:18 +0000 <realrenmin> @dotey 谢谢分享！我微博前段时间炸号了😂，等我申请新号去看你的内容
+1644471686257946624 2023-04-07 22:46:17 +0000 <realrenmin> @dotey 谢谢鼓励！如你所说，langchain用到了ReAct, 我的thread后面跟了一个简单的例子，不过也会抽时间详细说这个内容。
+1644462591677468673 2023-04-07 22:10:09 +0000 <realrenmin> 11/ 如果你喜欢我分享的NLP知识，请关注@realrenmin ， 每周会坚持发长thread跟大家做分享。
+1644462589131501568 2023-04-07 22:10:08 +0000 <realrenmin> 10/ 最后写一下这条thread的由来。  感谢@tinyfool 老师， 在他的space中聊到了langchain和ReAct。一直等他的视频等不到，我自己先做文字版预热了，相信tiny老师的视频会更精彩。
+1644462586606538752 2023-04-07 22:10:07 +0000 <realrenmin> 9/ 题外话，langchain的我看到的非常快速把学术成功封装在自己产品中的项目，它最近刚完成了1000万美元的融资。  不知道看完此条thread的你，有什么感想？你是不是也可以？
+1644462583288827904 2023-04-07 22:10:07 +0000 <realrenmin> 8/ 当我们仔细看它的log输出，会发现熟悉的：  Thought, Act, Obs Thought, Act, Obs Thought, Act, Obs  如果你看完了我的这条thread，就会知道langchain一定是借鉴了ReAct的方法。 我们去它的github看一下源代码，果然如此，用了同样的ReAct的fewshot方式做了封装。  https://t.co/Ef10X8Xs8T
+1644462575726510080 2023-04-07 22:10:05 +0000 <realrenmin> 7/ 如果拓展开来，把多跳问题换成其他，把wikipedia的api换成任意别的api，ReAct这种work flow其实可以移植到任何场景。  例如接下来的例子：  利用langchain来调用spotify的api来根据用户的自然语言指令，创建歌单。
+1644462573096689664 2023-04-07 22:10:04 +0000 <realrenmin> 6/ 总结作者使用的prompt  Thought, Act, Obs Thought, Act, Obs Thought, Act, Obs  简单的Re(reasoning)Act(Act) prompting, 并通过few-shot的方式，让LLM学会call api，并以[Finish]作为任务完成的标志。
+1644462570148093955 2023-04-07 22:10:04 +0000 <realrenmin> 5/ 为了解决此问题  ReAcT的作者首先设计了简单的wikipedia api(search, lookup, finish)来通过的外部知识协助LLM  其次，作者在call api之前和之后，显性的放入Thought和observation，用来指导和调整api的调用策略  这本质上还是CoT, 不过因为oberve了外部环境，CoT随之变化，打破了静态性  https://t.co/edCtMMAjA8
+1644462563659489280 2023-04-07 22:10:02 +0000 <realrenmin> 4/ 静态CoT在multi-hop的问题中尤其挣扎。  例图中问题，[device] ... [program] ? 是一个多跳问题，我们需要通过外部知识首先定位到program，然后才能回答哪个device可以control这个program  这种情况下，LLM产生的静态CoT出现了知识和逻辑的错误（apple tv不是progrm），导致最终预测失败  https://t.co/Xc4ozz659W
+1644462556692750336 2023-04-07 22:10:00 +0000 <realrenmin> 3/ CoT, 简言之就是把人的思维过程嵌入到prompt，指导LLM完成思考做出预测。  CoT的问题在于，它是静态的。  而我们人类，在行动之前，总是要根据环境和条件的变化不断的产生新的，动态的CoT来指导不同的行动。  同样的，LLM在充当智能coordinator的过程中，也需要根据不同的情况，call不同的api。
+1644462553819676674 2023-04-07 22:10:00 +0000 <realrenmin> 2/ paper: ReAct: Synergizing Reasoning and Acting in Language Models.  关键词 [推理]，[行动]  LLM有没有主动推理能力？目前没有确切答案。  但是可以明确的是，随着Chain-of-Thought(CoT)的引入，LLM的推理能力可被解锁。  CoT是ReAct的前提，我之前有thread专门介绍CoT，感兴趣的读者可以去阅读
+1644462550850084865 2023-04-07 22:09:59 +0000 <realrenmin> 1/ ReAct: 大语言模型推理，决断和行动的关键  最近大语言模型突破了文字处理任务的限制，向智能coordinator的角色转化。  一个疑问随之而来，“LLM到底如何决断并采取行动来调用不同的api的？”  本条thread读书笔记，通过解读论文ReAct，同时介绍langchain的一个具体例子来试图回答这个问题。  🧵  https://t.co/zJnuc7mjzR
+1644394923792138276 2023-04-07 17:41:15 +0000 <realrenmin> @forrestbao 第三部分，本是瑞典人搞的最好的，巅峰是universal dependency, 现在他（我）们天天追忆过去🥲
+1644394334244962317 2023-04-07 17:38:55 +0000 <realrenmin> @forrestbao 确实好像就这一本教科书😅
+1644377271837261828 2023-04-07 16:31:07 +0000 <realrenmin> @WuPingJu 对的人对的对话，仿佛是被输入了绝佳prompt message，将你之前人生中pretraining过程中的知识和语言触发，转换成为绝佳的输出，这就是灵感😆
+1644375187687604231 2023-04-07 16:22:50 +0000 <realrenmin> @shapeless2000 非常同意
+1644374889564975105 2023-04-07 16:21:39 +0000 <realrenmin> 自然语言处理专业最佳教科书一定是Dan Jurafsky的&lt;Speech and Language Processing&gt;.   https://t.co/LDhDr0RPBG
+1644372061291180033 2023-04-07 16:10:25 +0000 <realrenmin> 多说几句《数学之美》。  吴军老师用人话将传统的自然语言处理的方法讲了出来，比如经典的隐含马尔科夫，贝叶斯等统计模型。  其中不乏现在开发者常用的用cosine similarity算embedding的距离的这种文本向量化的内容。  可以说它可能是是最好的自然语言处理中文入门书籍。
+1644365037966876672 2023-04-07 15:42:30 +0000 <realrenmin> 看到大家在批评吴军。我想说，其实吴军老师的《数学之美》写得真的挺好的，推荐大家读读。
+1643957043055796224 2023-04-06 12:41:16 +0000 <realrenmin> 同感！最近在推特认识了很多有趣的台湾朋友，很开心！
+1643875293625458688 2023-04-06 07:16:26 +0000 <realrenmin> @tinyfool COT和ReACT让新时代来的更快了，tiny老师赶紧发视频讲langchain，不要拖延症，不然我文字版先发了😆
+1643633654931791873 2023-04-05 15:16:15 +0000 <realrenmin> @theSuperChing 谢谢你的鼓励！
+1643527592375472128 2023-04-05 08:14:47 +0000 <realrenmin> @changtimwu 谢谢分享！
+1643297851118694400 2023-04-04 17:01:53 +0000 <realrenmin> @dotey 正如你说的，step by step更重要，把人名换成赵本山也应该没啥问题😂
+1643289225347883014 2023-04-04 16:27:36 +0000 <realrenmin> @dotey 感谢转发！🥳
+1643280452642394112 2023-04-04 15:52:45 +0000 <realrenmin> @WuPingJu “好看”二字对我而言是超级的鼓励！
+1643261168570580992 2023-04-04 14:36:07 +0000 <realrenmin> @Senseye_Winning Thanks!
+1643253274550714368 2023-04-04 14:04:45 +0000 <realrenmin> @mtrainier2020 谢谢大佬转发！
+1643250019624009728 2023-04-04 13:51:49 +0000 <realrenmin> @j5mmyzhou 谢谢鼓励！
+1643249270420656130 2023-04-04 13:48:50 +0000 <realrenmin> @dThshuYL9pu3fz3 不客气， 谢谢鼓励！
+1643241616881385472 2023-04-04 13:18:26 +0000 <realrenmin> 13/ 下一个thread，将记录用CoT完成api和工具使用的paper读书笔记，如果你喜欢我的读书笔记，请关注我 @realrenmin ，每周会写一到两个长thread跟大家分享NLP的知识。
+1643241614226382849 2023-04-04 13:18:25 +0000 <realrenmin> 12 / Paper 1 链接： https://t.co/YFflHnNak3 Paper 2 链接： https://t.co/y1G7RRop8u
+1643241611546206209 2023-04-04 13:18:24 +0000 <realrenmin> 11/ 下面给出一个在@LangChainAI 中使用 chain-of-thought 来完成SQL query generation的例子    https://t.co/DCuya3fJcH
+1643241608606019585 2023-04-04 13:18:24 +0000 <realrenmin> 10/ ‘Let's think step by step’这句神奇的话，仿佛咒语，将解锁LLM的能力的过程一步简化！  具体来说，完成逻辑推理任务，只需要两步： 1) 念咒语‘Let's think step by step’， 生成CoT 2）将CoT再此嵌入prompt message，完成任务。  https://t.co/KerSaSRg8t
+1643241600636833793 2023-04-04 13:18:22 +0000 <realrenmin> 9/ Paper 2: Large Language Models are Zero-Shot Reasoners  Jason的文章中，所用的CoT是手动设计的，所以隶属于few-shot-CoT, 需要一定的人工成本。  此文作者小岛武，进一步简化了CoT的过程，简单的将 ‘Let's think step by step’ 放进prompt message， 让LLM自动生成CoT,  所谓的zero-shot-CoT.  https://t.co/BqGLfUcUGV
+1643241594244722688 2023-04-04 13:18:20 +0000 <realrenmin> 8/ 题外话，ChatGPT一种涌现的工具，其强大的涌现能力与作者Jason有直接的联系，我们有理由怀疑，不开源的ChatGPT下，或针对用户的输入和任务，有着隐含的CoT，来引导大模型获得更加突出的表现。
+1643241591623274497 2023-04-04 13:18:20 +0000 <realrenmin> 7/ 作者经过实验，发现这种简单的prompting方式在超过1000亿的大模型上非常有效，而在小模型上效果不明显。  如果将‘涌现’定义为：  “由量变引起的质变”  那么虽然作者没有直接证明大模型可以推理，但直接证明了经过CoT, 大模型的推理能力可以被解锁，并且这种能力在超过1000亿的超大模型上得以涌现。
+1643241588896964608 2023-04-04 13:18:19 +0000 <realrenmin> 6/ 之前的thread讲过language modeling，而CoT的思想与之呼应。当chain of thought被放在prompt中时，就会强制LLM在给出答案前， 把chain of thought输出。  从条件概率分布的角度来讲，答案在chain of thought后，其准确的可能性更大。  这也反应了一个问题，即LLM或许没有思考，它只在乎输出。
+1643241586330058754 2023-04-04 13:18:18 +0000 <realrenmin> 5/ 这样以来，prompt的message形式由  &lt;input, output&gt;  转化为：  &lt;input, chain of thought, output&gt;
+1643241583150792707 2023-04-04 13:18:18 +0000 <realrenmin> 4/ 作者Jason发现，传统的prompting中，总是让模型一步到位地解决一个复杂multi-step问题，而我们人类的认知方式则是分步骤解决复杂推理问题。  所以，他提出了一个简单有效的prompting方法，把人类思考问题的过程，所谓chain of thought，用自然语言的形式，显性的放在prompt message中。  https://t.co/xZdy7s0NxZ
+1643241576557338625 2023-04-04 13:18:16 +0000 <realrenmin> 3/ 在CoT出现之前, LLM的发展遇到了尴尬的瓶颈，模型越来越大，处理文字能力越来越强，但却似乎没有涌现出接近人类的推理能力，包括算术（e.g. 8只鸡4只兔同笼，一共多少只脚），常识（e.g. 鸭梨能漂在水中么？）以及符号（e.g. 抛硬币若干次，到底哪面朝上）的推理。
+1643241573331894279 2023-04-04 13:18:15 +0000 <realrenmin> 2/ Paper 1: Chain-of-Thought Prompting Elicits Reasoning in Large Language Models  此文是CoT的开山之作，作者Jason Wei当时就职于google brain，如今在openAI，同时也是ChatGPT的重要作者。  CoT是解锁LLM 推理能力的重要钥匙，一举开启了挖掘LLM隐藏技能的新的paradigm  https://t.co/bF94obf7Xm
+1643241565031366657 2023-04-04 13:18:13 +0000 <realrenmin> 1/ 从Chain-of-Thought (CoT) 到 Let's think step by step  最近每天都可以看到大语言模型进展的文章，LLM的能力从简单文字的处理，逐步演化到复杂的reasoning推断，甚至可以做decision making来完成api调用及tool的使用。  此条thread回顾了两篇重要的CoT文章作为读书笔记。  🧵👇  https://t.co/Dhj2oR7Szq
+1642091092391624704 2023-04-01 09:06:39 +0000 <realrenmin> @gdln15 没错！润欧master首选！ 其实对于本地人来说，根本连master也不用，读个职业学校，就完全够找工作生活的了。
+1642052445999185920 2023-04-01 06:33:05 +0000 <realrenmin> @xv44586 你说的没错，目前学术届也都在prompting，都在zero/few shot上做比较。跟fintuning横行比较的文章只能从做fintuning的文章中找了
+1642050346980712449 2023-04-01 06:24:45 +0000 <realrenmin> @xv44586 但outperform也是局限在某些任务，比如pet的summarization，tool former的问答。
+1642049297377116161 2023-04-01 06:20:34 +0000 <realrenmin> @xv44586 我个人觉得，finetune指的是adjust parameters， 所以例如pertain+finetune，prompt-base learning，instruct tuning甚至在用某一个语料继续拿language modeling继续pretrain也叫fintune。但zeroshot或fewshot本质都是在inference，没有改变模型参数，所以不是finetune。…
+1641910031074336769 2023-03-31 21:07:11 +0000 <realrenmin> @dotey 笑死😆
+1641904338934136832 2023-03-31 20:44:34 +0000 <realrenmin> @mtrainier2020 AI没得感情没得软肋也不懂痛苦🤣
+1641885662877044766 2023-03-31 19:30:21 +0000 <realrenmin> @dotey 好问题，因为确实有可能生成删库的代码的🤣
+1641847015913996288 2023-03-31 16:56:47 +0000 <realrenmin> @xv44586 而且fintune的方法有很多，所以说fintune过的expert model在某一个nlp任务上一定outperform zero-shot。 哪里说的不对，欢迎继续讨论！
+1641839907764043786 2023-03-31 16:28:32 +0000 <realrenmin> @xv44586 想认真回答你这个问题。  首先，llm的定义是什么？BERT, GPT-1算不算LLM?  按目前的定义，BERT是算的，但它都不具备zero-shot的能力？所以你问llm（bert）上有这现象么，它都不具备zero-shot的能力，你提的这个问题也就没法回答了。…
+1641755361676853249 2023-03-31 10:52:35 +0000 <realrenmin> @yihong0618 不得不点赞！
+1641702238816194560 2023-03-31 07:21:29 +0000 <realrenmin> 7/ 论文链接   https://t.co/1c6dca4Uka
+1641702236157009920 2023-03-31 07:21:29 +0000 <realrenmin> 6/ 代码 还未完全发布，但感兴趣的大家可以跟踪一下  https://t.co/lKBa9Sphpc
+1641702233531367425 2023-03-31 07:21:28 +0000 <realrenmin> 5/ 通常来说，代码是一部分人类后天精心设计的，而并非是通过长期自然的演变而形成，所以不被认为是自然语言。  但随着code不断丰富着nlp的语料库，以及nlp任务中越来越多的涉及对code的处理，code和人类自然语言之间的界限开始模糊。  未来，对code和人类语言综合处理，一定会带来功能更加高级的应用
+1641702230259830785 2023-03-31 07:21:27 +0000 <realrenmin> 4/ 解析用户输入和模型选择 作者通过few-shot 的in context learning，用chatGPT将用户端的自然语言输入转为预设的planning template。  Huggingface Hub上有大量的open source的针对于某项任务的专家模型，并且有着详细的自然语言形态的模型说明书。这给了根据template匹配模型的可能。  https://t.co/JQuU38oHCm
+1641702222634577920 2023-03-31 07:21:25 +0000 <realrenmin> 3/ HuggingGPT包含了四个重要步骤： 解析用户输入， 模型选择，执行endpoint和生成答案。 笔者个人认为前两步是HuggingGPT能成为task coordinator的重要原因。  https://t.co/JlQTPYtOTF
+1641702215709786112 2023-03-31 07:21:24 +0000 <realrenmin> 2/ LLMs拥有在对自然语言数据处理的zero-shot能力。这也是恰恰是它的limitation，即 i) 只能处理文字 ii) zero-shot的跟fintune过的专家模型相比，差距明显。  HuggingGPT意在解决这个问题，其核心思想在于，无论多么复杂的现实推理任务，都可以用语言表述。  而chatGPT成为链接语言和多模态任务的桥梁
+1641702212710834176 2023-03-31 07:21:23 +0000 <realrenmin> 1/ 论文分享 HuggingGPT: Solving AI Tasks with ChatGPT and its Friends in HuggingFace  昨天在@tinyfool 的space聊到，用chatGPT处理文字的简单任务已经oldschool，把chatGPT作为coordinator，来协调多种大模型API来完成多模态复杂任务已成为趋势。  不到24小时，已看到对应文章，HuggingGPT。  🧵  https://t.co/RBQvVmErVW
+1641582084538990594 2023-03-30 23:24:02 +0000 <realrenmin> @Chinese_XU 我： -7$ 😅
+1641488577446985728 2023-03-30 17:12:28 +0000 <realrenmin> @youqla 🥲三天不吃早饭就可以了
+1641470482288451591 2023-03-30 16:00:34 +0000 <realrenmin> @tinyfool 点赞！！
+1641466902714146820 2023-03-30 15:46:21 +0000 <realrenmin> @lvxinxin 谢谢鼓励，我们互相学习！我上麦比较少，好多表达不流畅也不自然，争取以后多上麦跟大家分享😃
+1641464240392351744 2023-03-30 15:35:46 +0000 <realrenmin> @lvxinxin 哈哈，点赞！！！
+1641464237082959878 2023-03-30 15:35:45 +0000 <realrenmin> @deter3 😊
+1641453303254114307 2023-03-30 14:52:18 +0000 <realrenmin> 今天，咱也是有蓝标的人了🤣
+1641408108554514436 2023-03-30 11:52:43 +0000 <realrenmin> @yesheng001 可靠的的information retrieval system， 帮你完成document级别的搜索。
+1641368870521827328 2023-03-30 09:16:48 +0000 <realrenmin> @tinyfool 说得非常对
+1641159104902070274 2023-03-29 19:23:16 +0000 <realrenmin> 再次推荐ColBERT！
+1641065058573623296 2023-03-29 13:09:34 +0000 <realrenmin> @yihong0618 故事fm我去年的某段时间开始就不敢听了，太边缘了，每次听完心情莫名阴郁。 但最喜欢的是它讲东北啤酒屋的那集。
+1640990627767758848 2023-03-29 08:13:48 +0000 <realrenmin> @zw48063535 很有道理！
+1640976537456623617 2023-03-29 07:17:49 +0000 <realrenmin> 7/ 最后感谢@WuPingJu 和@dotey 介绍的typefully，可以让我方便的写thread！
+1640976534826795013 2023-03-29 07:17:48 +0000 <realrenmin> 6/ 论文链接   https://t.co/GNz9NsawQx
+1640976532234731520 2023-03-29 07:17:47 +0000 <realrenmin> 5/ 代码github   https://t.co/Akkzq5wEO0
+1640976529416159233 2023-03-29 07:17:47 +0000 <realrenmin> 4/ 生成的代码包含了对各种预训练cv模型api的调用，例如识别，分割，最终解决视觉推理问题。  这个清奇的思路似乎把人类自然语言反编译为源代码，让代码解决代码问题。  https://t.co/Rpr8qfpTpY
+1640976522868850688 2023-03-29 07:17:45 +0000 <realrenmin> 3/ 值得一提的是，这种prompting的方式非常smart！  function signature天然包括了api名称以及输入输出type，而docstrings包含了执行实际的例子。因而避免了在prompt message中嵌入冗长的代码的具体实现。  https://t.co/xRcaJQpBCI
+1640976515843387393 2023-03-29 07:17:43 +0000 <realrenmin> 2 / 此论文完成了codex下架之前🥲  目的是解决视觉推理问题，比如通过判断一个图片中不同的实体及其数量，算简单的数学问题。  作者通过把function signature和docstrings当作context，连同query一起promptingLLM生成带有视觉预训练模型api的代码。  https://t.co/AWDe0foZJK
+1640976506129358849 2023-03-29 07:17:41 +0000 <realrenmin> 1/ 有趣论文分享  ViperGPT: Visual Inference via Python Execution for Reasoning  这是一篇简单的大模型组合胶水文章，但作者脑回路十分清奇：  把自然语言的问题（query）生成python 代码来解决现实的视觉推理。  读罢，不禁感想，如果代码可以描绘一切，那么这个世界有可能是代码生成的么？  🧵  https://t.co/x2Tp1ArZWr
+1640946837229125634 2023-03-29 05:19:47 +0000 <realrenmin> @dotey @WuPingJu 谢谢！
+1640946775895711745 2023-03-29 05:19:33 +0000 <realrenmin> @WuPingJu 谢谢！
+1640859333754855426 2023-03-28 23:32:05 +0000 <realrenmin> 写了个长thread，但是发布完，只显示了thread第一条，其余的都丢失了，试了几次都这样，有朋友遇到过么。
+1640005772057755649 2023-03-26 15:00:20 +0000 <realrenmin> @LingRui_Ai 同学你非常sharp！ language modeling是目前大模型预训练的核心，也是为什么大模型被称为language model的原因。会单独发一个thread讲！
+1640001582128406535 2023-03-26 14:43:41 +0000 <realrenmin> @yihong0618 十六字令 赏花  归。 去马如飞酒力微， 时已暮， 醒时赏花归。
+1639994724705599489 2023-03-26 14:16:26 +0000 <realrenmin> @Yaman84426026 @Tisoga intresting，你去试试，应该比我靠谱
+1639920678093684739 2023-03-26 09:22:12 +0000 <realrenmin> @gs_fou 当然！fo你了
+1639918279450849280 2023-03-26 09:12:40 +0000 <realrenmin> @yihong0618 滑动窗口
+1639915649609744384 2023-03-26 09:02:13 +0000 <realrenmin> 好看！ 翻译长文章是件费脑力和体力的事情，尤其是翻译专业文章，能准确的提炼原作者观点非常不容易，感谢楼主！
+1639718135858176000 2023-03-25 19:57:22 +0000 <realrenmin> @xleaps 谢谢重要的补充！ 是的，如你所说，因为需要准备数据，toolformer只会文中列举的6种工具。在这之外的api，不能做到scalability。
+1639702064572899328 2023-03-25 18:53:31 +0000 <realrenmin> @PenngXiao 好问题，好题目，我mark下来，改天写一个thread！
+1639672138809462785 2023-03-25 16:54:36 +0000 <realrenmin> @oran_ge @Tisoga 谢谢！
+1639667955897122816 2023-03-25 16:37:58 +0000 <realrenmin> @Wuzhong_Liu 谢谢！
+1639653710052700161 2023-03-25 15:41:22 +0000 <realrenmin> @WuPingJu 感谢分享，看了这条推，今天就去买蓝标！
+1639625262420615169 2023-03-25 13:48:19 +0000 <realrenmin> @zw48063535 @torontobigface 🤣👍
+1639569610067279872 2023-03-25 10:07:11 +0000 <realrenmin> @fdqdcd3dz 谢谢！
+1639538853378760704 2023-03-25 08:04:58 +0000 <realrenmin> @AngusLee5120 @Tisoga 谢谢！🤣🤣🤣
+1639531126036344832 2023-03-25 07:34:16 +0000 <realrenmin> @huachuan10 @Tisoga Tusen Tack!
+1639530935652679681 2023-03-25 07:33:30 +0000 <realrenmin> @smy20011 @Tisoga 其实是领域不同，一个是造发动机，一个是组装汽车，都很重要很有意思。 prompting是language modeling在inference阶段最简洁的表达，而且非常贴合大众，是非常好的。
+1639520195155820544 2023-03-25 06:50:49 +0000 <realrenmin> @Shiken_Ra 谢谢！
+1639519371692318720 2023-03-25 06:47:33 +0000 <realrenmin> @fanyang2019 thanks!
+1639519254813847553 2023-03-25 06:47:05 +0000 <realrenmin> @gongyijack @Tisoga 非常好的例子，你可以给一个concrete的倒装句，一起讨论。
+1639519067907211266 2023-03-25 06:46:21 +0000 <realrenmin> @wendy53581 谢谢！
+1639519007735701504 2023-03-25 06:46:06 +0000 <realrenmin> @coscostco 谢谢！
+1639518904723681280 2023-03-25 06:45:42 +0000 <realrenmin> @StevenHero39 谢谢，Mu Li老师的频道确实好！
+1639414532375191554 2023-03-24 23:50:58 +0000 <realrenmin> @Katony2 @Tisoga 哈哈，好高的评价，谢谢！
+1639404805893287936 2023-03-24 23:12:19 +0000 <realrenmin> @dotey 谢谢你的鼓励和转发，我这几天太有动力了😀
+1639403194492108801 2023-03-24 23:05:54 +0000 <realrenmin> @WuPingJu 谢谢！
+1639402326350807042 2023-03-24 23:02:27 +0000 <realrenmin> @lxlcs201 确实有挑战，所以它官方特地给了写manifest的example，而且规定manifest就是为了让它的模型更好的知道怎么call。
+1639396261303312385 2023-03-24 22:38:21 +0000 <realrenmin> 10)  如果大家喜欢我这种讲论文的方式，请给我点赞鼓励😃 注：如果这个thread中有任何差错，欢迎大家指正，讨论，让我们一起提高。  附上原文链接：  https://t.co/mFLUFrE9lj
+1639396259575283712 2023-03-24 22:38:21 +0000 <realrenmin> 9）我们再次回到openai plugin的场景，此时你也许明白了，根据用户的自然语言，模型为什么可以知道call哪个endpoint，以及传递什么样的参数了。
+1639396258140811269 2023-03-24 22:38:21 +0000 <realrenmin> 8) 用此语料，作者再一次运用language modeling，fintune了GPT-J。经过这种预料的fintune，模型学会了when，which，how to call api：  when: 自然语言input：joe biden was born in  which/how API call: [QA("Where was JoeBiden born?")] 。  QA是api的类名，"Where was JoeBiden born?"是参数
+1639396256446308352 2023-03-24 22:38:20 +0000 <realrenmin> 7）最终过滤好的质量较高的api被作者设计的special token&lt;API&gt;&lt;/API&gt;显性地放到语料中, 例子如下：  Joe Biden was born in &lt;API&gt;[QA("Where was Joe Biden born?")] -&gt;Scranton &lt;/API&gt;
+1639396254735056898 2023-03-24 22:38:20 +0000 <realrenmin> 6）为了造出大量的并有较高质量带有这种api的预料，作者先是通过prompting语言模型造出如上条造出大量example。  由于这些example是不够可靠的，有很多无用的api，作者再次运用language modeling，通过判断产生的api example是否可以准确预测未来时序的token（api是否执行成功），来进行过滤。
+1639396253015453701 2023-03-24 22:38:19 +0000 <realrenmin> 5/ 作者Timo看到并把流动的语言api拿出，又再次explicitly嵌入在语言之中，相当于把语料apply了一个function，例如：  Joe Biden was born in Scranton. 变为：  Joe Biden was born in [QA("Where was Joe Biden born?")] Scranton  [QA("Where was Joe Biden born?")] 就是一个api。
+1639396251169873920 2023-03-24 22:38:19 +0000 <realrenmin> 4/ 插播Language Modeling:  语言是流淌的时序sequence，每一个字的出现都与这个字出现之前的时序关联，比如 “我爱推特”，中的特与‘我爱推’相关，当然此处‘油’也符合条件。  这种接话茬般的language modeling也是gpt预训练的重要方法，让gpt系统模型拥有了超强接话茬能力，进而获得语言能力。
+1639396249563455490 2023-03-24 22:38:19 +0000 <realrenmin> 3/ 这恰好是toolformer这篇论文做的事情，即训练语言模型学会使用api。  让我拍案叫绝的是，作者Timo哲学般地在我们的语言中看到了流动的api。  我们的语言，是有结构的，如果把我们的一句话分成前后半句，后半句的发生一般来说是靠前半句触发，像极了api工作方式，前半句是输入，后半句是输出。
+1639396247336280068 2023-03-24 22:38:18 +0000 <realrenmin> 2/ 首先我们看一下OpenAI plugin文档，一个重要的bullet： “perform actions on behalf of the users”  具体逻辑 开发者按标准化manifest file写specific，包括api endpoints， examples和自然语言的description。 当用户激活plugin进入对话，manifest的信息会给chatgpt，然后根据用户问题，call api  https://t.co/MbuFFxtYeF
+1639396245524324353 2023-03-24 22:38:18 +0000 <realrenmin> 1/ 在OpenAI发布plugin后，后知后觉地意识到了toolformer这篇论文的重要性，于是重读了论文，把一些读后感做个thread  看到其他推友如@Tisoga 也写过类似的总结，深入浅出的分析了toolfomer可以干什么。  此thread从language modeling的角度，通俗地谈一下toolformer是如何做到学会使用工具的。  🧵  https://t.co/g8HIAh07gZ
+1639277582951628802 2023-03-24 14:46:46 +0000 <realrenmin> @meatandtea 哈哈哈
+1639250032707682310 2023-03-24 12:57:18 +0000 <realrenmin> @Martinaaa5678 @mranti 谢谢您的信息，很有用，等我去看看openai的tokenizer。
+1639249498210803715 2023-03-24 12:55:10 +0000 <realrenmin> @yihong0618 快了！
+1639211997131837441 2023-03-24 10:26:09 +0000 <realrenmin> @Martinaaa5678 @mranti 你的意思是说，你输入了546个汉字，但是openai统计是1000个tokens么？因为标点符号也算是token，所以你的整段内容的所有token大概有1000个
+1639199216974065664 2023-03-24 09:35:22 +0000 <realrenmin> @gfhgsu 同感！
+1639198576600555527 2023-03-24 09:32:50 +0000 <realrenmin> @orwell_benjamin 回头想想，世界变化真快
+1639193438871601152 2023-03-24 09:12:25 +0000 <realrenmin> 瞬间想到了当年老罗的TNT工作站…
+1639192231369113600 2023-03-24 09:07:37 +0000 <realrenmin> @zach_osaka 那时候我还在nlp的世界愤世嫉俗
+1639177597442465792 2023-03-24 08:09:28 +0000 <realrenmin> @lateinteraction I agree completely.  At the moment, we even 'must' designate these APIs as a baseline models, but do non-open source APIs truly qualify as "models"?
+1639160971603197953 2023-03-24 07:03:24 +0000 <realrenmin> @toopowerful 请展开讲讲什么样的复杂逻辑问题？
+1639057323216830466 2023-03-24 00:11:32 +0000 <realrenmin> @yhcnux @LangChainAI 哈哈，读完了，请在这条下面分享心得！
+1639050175581675522 2023-03-23 23:43:08 +0000 <realrenmin> Timo Schick 是我最喜欢的nlp研究员。  不是因为他做的东西多么的炫酷，而是他之前做的Pattern-Exploiting Training 只需要1080ti的显卡。  并且开创了挖掘语言模型预训练知识的paradigm, prompt-based learning。  一看这篇一个月前的文章是他的第一作者，先怒读50遍再说。
+1639038998403518464 2023-03-23 22:58:43 +0000 <realrenmin> @BodenRing8964 @forrestbao 🥲
+1639036046678585344 2023-03-23 22:47:00 +0000 <realrenmin> @forrestbao 真相了
+1639035034601496577 2023-03-23 22:42:58 +0000 <realrenmin> @forrestbao 是的，但其实在个别任务上用些技巧还是可以打败GPT4的，就像几个月前研究人员打败davinci-003一样，毕竟它是zero/few-shot。
+1639031203155042305 2023-03-23 22:27:45 +0000 <realrenmin> @forrestbao 老师一针见血！ 研究人员放在arxiv里的文章，还没来得及投或被reviwer看到，就不具实效性了，心塞。
+1639000049743978496 2023-03-23 20:23:57 +0000 <realrenmin> @dotey 你的解释也很好，谢谢交流和分享！
+1638992897860161548 2023-03-23 19:55:32 +0000 <realrenmin> @lidangzzz  @HedgehogLabHQ  很眼熟。。。
+1638979139473494025 2023-03-23 19:00:52 +0000 <realrenmin> @danielmiss33 chatEO这个词真说不准会成为专有词汇
+1638975956340867073 2023-03-23 18:48:13 +0000 <realrenmin> @smy20011 网站要么自己集成chatgpt，要么让openai来plugin，真是倒逼转型。
+1638972915243708420 2023-03-23 18:36:08 +0000 <realrenmin> Openai宣布ChatGPT plugin，未来所有网站都会被chatgpt一遍。 个人判断，小公司会直接用Openai的api，省时省力。 由于数据隐私，大公司会针对需要的产品逻辑和nlp任务，仅用chatgpt做prototype，然后定位更可靠的模型，然后api设计，mlops照样搞一遍。 结论是，咱调包侠，调参侠，云侠，暂时还有口饭吃
+1638970307036737552 2023-03-23 18:25:46 +0000 <realrenmin> 记得不久前@tinyfool 演示了一个携程订票的chatgpt简单demo，心里想估计得等个一年半载才会有个相关小产品吧，没想到几天后官方支持了，互联网真的要洗牌了。
+1638968988142039055 2023-03-23 18:20:32 +0000 <realrenmin> @Jellzone 🥲
+1638940304748191744 2023-03-23 16:26:33 +0000 <realrenmin> RNN有小范围的context信息获取能力，比如写中国古诗。 看2014年的一篇论文，以及GitHub实现。  https://t.co/KoBqD5Pdk5
+1638934409079582721 2023-03-23 16:03:07 +0000 <realrenmin> 川虎ChatGPT, 放佛嗅到了未来关于prompt message设计，测试的GPT版postman？ 围绕GPT api打造功能性小产品卷到天际，做一些辅助开发的产品也是一个好的思路。 不能小看prompt message，毕竟postman已经估值50亿美元。
+1638891870125170689 2023-03-23 13:14:05 +0000 <realrenmin> @guocity @LangChainAI 请问你的llm用的哪个model？
+1638827199221444608 2023-03-23 08:57:06 +0000 <realrenmin> @jameswang4648 @mranti 是的，在nlp中，所有的punctuation也都算token，都有自己的id。
+1638826607002505217 2023-03-23 08:54:45 +0000 <realrenmin> @tgcoder 谢谢你的肯定！
+1638824076365172746 2023-03-23 08:44:42 +0000 <realrenmin> @The_Real_Gump @mranti 听上去是个非常有趣的coding方案，不知道专门做汉语预训练的研究人员有没有进行类似的工作。
+1638823549648486400 2023-03-23 08:42:36 +0000 <realrenmin> @HenryLee8910 感谢补充！
+1638823337601253377 2023-03-23 08:41:46 +0000 <realrenmin> @yhcnux @wnssfl 对的，目前chatgpt只是非常适合开发prototype，可是一旦产品成型，需要稳定性，就需要自己去定位在某项nlp任务有更好更稳定表现的模型，然后设计api和mlops的工作一样也少不了。
+1638822715254616064 2023-03-23 08:39:17 +0000 <realrenmin> @yhcnux @wnssfl 说的没错！其实chatgpt的出现，改变了ai行业。在BERT年代，也很少有公司用大模型的，因为从设计api，到mlops，技术难度很高，人才也很难找。之前大多数的ai 公司，扒开一下还停留在embedding+svm的阶段。 chatgpt化简为繁，一个api，让llm直接代替svm，让行业按下了快进键。
+1638821846081495042 2023-03-23 08:35:50 +0000 <realrenmin> @Chinese_XU 没错，实际上，随着chagpt的浪潮，很多程序员自发讨论和开发的内容已经非常贴近学术了，比如in-context learning以及讨论token是啥，这令人惊讶和惊喜！
+1638821334917554177 2023-03-23 08:33:48 +0000 <realrenmin> @StephanCptMax 需要一定的数据量，一般来说要评估一个推荐系统，一个query需要50个example [ref:  https://t.co/ty66eJXrxD 的evaluation章节] 非学术场景中没必要这么多，你可以标注一些推荐，看看rank结果，算一下average precision和mean average precision
+1638820552742764546 2023-03-23 08:30:42 +0000 <realrenmin> @gantrols 已经没了🤣
+1638820447356592129 2023-03-23 08:30:17 +0000 <realrenmin> @Chinese_XU @yihong0618 @xicilion @mranti @tinyfool 说的没错，或者说人类的语言本身也是苍白的，无力描述这个丰富的世界，以及难以言状的美景与感受。 未来，看看多模态会带来什么。
+1638819829804068865 2023-03-23 08:27:49 +0000 <realrenmin> @dotey 不要这么客气哈，直接at我，咱们交流就好。 看了一下demo，主打 paper。这种文本的有清晰的结构，而且abstract往往是整篇论文的最佳summary。所以有可能是简单的写了一个逻辑把abstract，introduction，conclusion拿出放进模型，生成总摘要。 你的猜测也是可以的，我只是觉得他们应该不会做的那么细😅
+1638818030657339393 2023-03-23 08:20:40 +0000 <realrenmin> @xxaccp @LangChainAI 只要把敏感信息作为context放在api call中，就会暴露
+1638762181004087296 2023-03-23 04:38:45 +0000 <realrenmin> @zw48063535 非常同意！
+1638690485689778177 2023-03-22 23:53:51 +0000 <realrenmin> @fanyang2019 @yihong0618 @xicilion @mranti @tinyfool Thank you for your recognition!
+1638689483238326272 2023-03-22 23:49:52 +0000 <realrenmin> 作为一个nlper，领域被gpt颠覆已成事实，这个时候不应该在自己的世界里愤世嫉俗，而应该像开放者一样拥抱这个浪潮。  以后，坚持分享。
+1638689481648934913 2023-03-22 23:49:52 +0000 <realrenmin> 这几天感谢素不相识的@yihong0618 @xicilion @mranti @tinyfool 转发了我几条姿势浅薄的推特，使我多了很多读者，看着一颗颗点赞红心，增强了我继续分享nlp知识的热情。  这或许就是开发者的特质，从未谋面，不计前嫌，觉得有趣就分享，有种community的vibe。这是我在微博上从未体会过的。
+1638581938125524992 2023-03-22 16:42:32 +0000 <realrenmin> @Senseye_Winning 谢谢肯定！尽自己最大努力帮助大家了解AI和NLP
+1638542439177674754 2023-03-22 14:05:34 +0000 <realrenmin> @Senseye_Winning 感谢有耐心看这么长一个thread！
+1638535685794668544 2023-03-22 13:38:44 +0000 <realrenmin> @coscostco @LangChainAI 谢谢鼓励
+1638534725915557888 2023-03-22 13:34:55 +0000 <realrenmin> 附上一个langchain跟notion db集成的例子。  https://t.co/TOXfkehn2b
+1638534724162408448 2023-03-22 13:34:55 +0000 <realrenmin> 分享一个快速开发跟LLM交互的的开源框架， langchain @LangChainAI 。 非常好用，但是好像中推圈没怎么看到消息。   https://t.co/aBFzHKdj7G
+1638521699153899522 2023-03-22 12:43:09 +0000 <realrenmin> 由此看，我们nlper暂时不会被替代。百度产品找一个nlper来加一层word disambiguation，就不会那么容易的被聪明的ai测试员抓到把柄，请百度联系我。。。。🤣
+1638517306555879424 2023-03-22 12:25:42 +0000 <realrenmin> 所以在context极少的情况下， draw the picture of bus and mouse，在英文中才会出错，因为bus 和mouse的token id是唯一的。 在中文不会，因为 总 线 公 交 车 鼠 标 老 鼠的token id是完全不一样的。（token id看我上条推特） 所以大概率，百度文新先翻译，再生成，套壳嫌疑非常大。
+1638517304945197059 2023-03-22 12:25:42 +0000 <realrenmin> 在llm中这个问题不存在，因为词的embedding由句子的context决定，每次都不一样。这样llm算出的I see the cat中的see， 与I saw the wood 中的saw就不接近了。
+1638517302936076290 2023-03-22 12:25:41 +0000 <realrenmin> 接自己上条解释什么是token来看百度文心的套壳嫌疑。  首先要理解static embedding和contextual embedding的区别  在static embedding中，词的embedding是固定的，比如see和seen，saw都接近，而saw（锯）跟wood接近，那么see就跟wood也接近。如果是多语言的，那么see和木头这俩词也在embedding空间接近
+1638485117663338500 2023-03-22 10:17:48 +0000 <realrenmin> @LiuGods @mranti 谢谢鼓励！
+1638474025495134208 2023-03-22 09:33:43 +0000 <realrenmin> @catding11234 @mranti 感谢补充！
+1638466210038702081 2023-03-22 09:02:40 +0000 <realrenmin> @zw48063535 @mranti 🤣
+1638462698064080898 2023-03-22 08:48:43 +0000 <realrenmin> @elibwudi @mranti 对，换成英语思维，一个token就是一个最小语义的representation，跟词元的意思确实比较像。
+1638456479664439297 2023-03-22 08:24:00 +0000 <realrenmin> @mranti Anti老师，我在自己的twitter写一个简短的thread来讲解token，希望能有所帮助！
+1638455384355610625 2023-03-22 08:19:39 +0000 <realrenmin> 我们找到在本地cache路径下的vocab.txt, 用vim打开，搜索 ‘姿’，会发现它在2014行，由于我的vim是从1开始显示行数的，而bert的字典是从0开始的，所以，它的id应该是2014-1=2013。 NLP语言模型就是这么查字典的，跟我们人类差不多。  https://t.co/1Flr22nO5X
+1638455382229110786 2023-03-22 08:19:38 +0000 <realrenmin> 那么为什么要做tokenization呢，主要是模型不识字，它主要还是把输入的文字转成token，然后根据自己的字典查询token的顺序代码，来记住输入的是什么。  让我们把姿势输入tokenizer后的张量拿出来，会发现2013， 和1232两个代码。  https://t.co/EtwBhk3ee7
+1638455380882628609 2023-03-22 08:19:38 +0000 <realrenmin> 我们看到，由于语言天生的差异，tokenization的结果也不同。直观来看，英文的一个word中的letter本身的组合就有意义，比如developer的词根与develop有关，er表示名词。那么在character级别上做tokenization，可以抓到更多的信息。
+1638455379343425536 2023-03-22 08:19:38 +0000 <realrenmin> 我们load一个中文bert模型，把‘开发者喜欢学习新姿势。’做tokenization。 由于我们中文一个字就是一个character，所以一个字就是一个token。  https://t.co/fvnOIT7Xiw
+1638455377648840707 2023-03-22 08:19:37 +0000 <realrenmin> 我们首先load一个英文bert模型，把‘Developer likes developing skills’ 做tokenization。 发现 Developer 被拆成了 'Dev', ##'elo, '##'per' 几个subtoken。  这个例子告诉我们，bert处理英文中，一个单词不一定是一个token，它考虑了sub token的character级别的编码。 那么中文是怎么样的呢？  https://t.co/9Yf8bpvAQG
+1638455376197632000 2023-03-22 08:19:37 +0000 <realrenmin> 看到@mranti 的讨论NLP和gpt里的token是什么。很棒的讨论，毕竟openai按token收钱，咱们交钱也得交的明白。 由于GPT不开源, 此条推特thread以BERT为例，讲一下什么是token，为什么要做tokenization。
+1638432143167635456 2023-03-22 06:47:18 +0000 <realrenmin> @supersu097  https://t.co/LPIyKMRD2l
+1638236165416296464 2023-03-21 17:48:33 +0000 <realrenmin> @wnssfl 因为chatgpt的api确实很便宜，但看一下gpt4的价格你就不会认为便宜了。
+1638209395161980929 2023-03-21 16:02:10 +0000 <realrenmin> @kaby @mranti 大一点的开源模型如llama都是对标raw gpt的，对话功能需要自己做。
+1638208174976106498 2023-03-21 15:57:20 +0000 <realrenmin> @deter3 哈哈，谢谢老铁鼓励！
+1638198795245682690 2023-03-21 15:20:03 +0000 <realrenmin> ChatGPT API 不稳定？ 想打造自己的chatbot，而不完全依赖openai，怎么办？ 可以看看清华开源的双语对话模型。 我始终觉得，虽然openai帮你解决了mlops问题，但根据token的数量收钱像抢劫。 有了开源模型，一次部署之后，付一些云服务的费用后，一切都属于个人专属。 链接：  https://t.co/NLeFLCGLyw
+1638105946516860929 2023-03-21 09:11:06 +0000 <realrenmin> @deter3 你说的没错，有跨语言的embedding可以直接抓取跨语言的词汇联系。而tfidf本质是个统计模型。 所以说要看场景，因为现实中我们要看cost和tradeoff。
+1638104208695074821 2023-03-21 09:04:12 +0000 <realrenmin> @deter3 指的是document级别的，我们自己就做过，差不了多少个百分点，事实上，tfidf依然广泛用在工业界，因为它的轻量级。
+1638102007327105026 2023-03-21 08:55:27 +0000 <realrenmin> 如果有条件，自己部署一个neural-based IRS到云端，可以稳定高效的帮你完成query-document级别的搜索工作。  目前表现最强的的nerual irs是我前面推特提到的colbert。大家可以看一下。   https://t.co/Lc7Uxrjuau
+1638102005909471233 2023-03-21 08:55:27 +0000 <realrenmin> 看到很多developer在使用向量数据库。  向量数据库或许是好用的，但它本质是针对词或句子的embedding的比较，我们在学术工作中已经做过评估，效果比传统的tfidf稍微好一点，但是tfidf可以非常轻量级的本地实现，所以有tradeoff。  如果要引入语义索引，建议用专门的information retrival system (IRS)
+1637971386831454211 2023-03-21 00:16:25 +0000 <realrenmin> Colbert：  https://t.co/Lc7Uxrjuau
+1637971385069760514 2023-03-21 00:16:24 +0000 <realrenmin> 论文code ：  https://t.co/rdtuo3GKEC
+1637971383543029760 2023-03-21 00:16:24 +0000 <realrenmin> 论文： https://t.co/4C2zlNxtrZ
+1637971382049857538 2023-03-21 00:16:24 +0000 <realrenmin> 简言之，用colbert完成对知识库的索引，并处理自然语言的query，配合其他llm完成knowledge-intensive NLP task。  广大gpt爱好者，可用此框架，打造出专家/个人知识库的chatgpt。
+1637971380539994113 2023-03-21 00:16:23 +0000 <realrenmin> 我喜欢的论文分享：   Composing retrieval and language models for knowledge-intensive NLP  非常接地气的一篇论文，通过引入information retrival system，简单直接的完成了in-context learning.
+1637966011692466176 2023-03-20 23:55:03 +0000 <realrenmin> precis!
+1637958557466341376 2023-03-20 23:25:26 +0000 <realrenmin> Same.
+1637957999699394560 2023-03-20 23:23:13 +0000 <realrenmin> chatgpt的api最近太不稳定了，拿它当baseline，做问答的评估，call了两百次就不行了，导致实验都进行不下去。  openai.error.RateLimitError: The server had an error while processing your request. Sorry about that!
+1637801048415821826 2023-03-20 12:59:33 +0000 <realrenmin> 有女儿后，看不得这样的广告。泪目。
+1637800842790051840 2023-03-20 12:58:44 +0000 <realrenmin> @deter3 @zonghengjp 泪目
+1637755273744883714 2023-03-20 09:57:39 +0000 <realrenmin> @dom_does @TextCortex 🤣
+1637751697484259328 2023-03-20 09:43:27 +0000 <realrenmin> ChatGPT is down.  常用它来润色段落的我，突然发现写连贯流畅的句子是如此费劲。 来找找其他代替产品，发现都是gpt api的套壳。 ChatGPT 让我们踩在巨人的肩膀上，有了API, 我们仿佛抬手就能碰到天。 但当ChatGPT outage后，只会prompt的人类忽然发现，所谓的技能提升都是虚幻。 raise error.Timeout  https://t.co/GDwaIcyxur
+1637427804282273802 2023-03-19 12:16:25 +0000 <realrenmin> @tinyfool 谢谢你的open的反应，心胸比我开阔！
+1637426906218758147 2023-03-19 12:12:51 +0000 <realrenmin> @zwlwill 你说的非常准确。 产品逻辑确定后，就具体任务定位表现更稳定的模型（包括微调或以及其他非gpt预训练模型），进行完整的1 评估，2 api设计，3 mlops，和4 发布产品。 openai说白了，上述4步全省，所以特别适合prototype和资源有限的小规模创业公司，如我们的论证，这也是它的局限性。
+1637421023501987841 2023-03-19 11:49:28 +0000 <realrenmin> @haoel 谢谢，很真诚，肺腑之言
+1637416946391023616 2023-03-19 11:33:16 +0000 <realrenmin> @deter3 我不是亿万富翁😅，这是支持我们research工作的组织的集群
+1637410104755605504 2023-03-19 11:06:05 +0000 <realrenmin> 特别喜欢推友@lsdy1395188 的内容，满满的生活气，真好！
+1637386505483087874 2023-03-19 09:32:18 +0000 <realrenmin> @KongZScott @haoel 缺点被你一语道破，挺没面子的，但觉得你说的挺中肯的。
+1637372866546003969 2023-03-19 08:38:06 +0000 <realrenmin> @nobody__1111 We are on the same page!
+1637372599092105216 2023-03-19 08:37:03 +0000 <realrenmin> @haoel 确实是主观之言，没想到会引起不小讨论。 我严谨一点，把计算机科学替换为软件工程。 本条不针对踏踏实实学习ai，搭建ai api的程序员，只针对不懂装懂还持续输出干货的大尾巴狼。
+1637372113492254725 2023-03-19 08:35:07 +0000 <realrenmin> 鉴于此推引起了很多讨论，再多发一条解释一下。  学无止境，程序员最优秀的能力是学习，本条不针对任何踏踏实实学ai的程序员，相反我从很多有意思ai api集成的项目学到了很多，比如@yihong0618的xiaogpt。  本条主要反对不懂装懂还持续输出所谓‘gpt干货’的伪专家，希望他们成功，成为成功的营销号。
+1637361449763733504 2023-03-19 07:52:44 +0000 <realrenmin> @chenglu_she 唯一能学到的是怎么利用自己的流量收割，这完全不是扣帽子，这就是事实。 此条也不针对于踏实学习的初学者，喷的就是装大尾巴狼的伪专家。 说他伪专家是轻的，骗子更合适。
+1637360434658308096 2023-03-19 07:48:42 +0000 <realrenmin> @chenglu_she 如果是输出错误的外行的专家，我学不到任何东西，输出的是骗人的垃圾
+1637345353136570369 2023-03-19 06:48:47 +0000 <realrenmin> @LKingdoms 不是我的意思。 前端，uxui挺好的。装AI专家的前端uxui垃圾
+1637344528007847940 2023-03-19 06:45:30 +0000 <realrenmin> @chenglu_she 你说的更严谨些，点赞！ 而且你当然有资格评论！但作为一个懂机器学习专家，当你看到不断输出“GPT干货”的伪专家，是什么感想？
+1637342651849617408 2023-03-19 06:38:03 +0000 <realrenmin> @xv44586 有道理！
+1637339892622536705 2023-03-19 06:27:05 +0000 <realrenmin> @778Da 已经很不错了，比那些只会拼写GPT就宣称自己是AI专家的人强😃
+1637251654079729665 2023-03-19 00:36:27 +0000 <realrenmin> @zw48063535 @Daxiong17917006 聊到这一步，我觉得咱们应该有共识了。简中推上有多少号称gpt专家能聊到我们这个thread中的内容呢？这也是我为什么发这条推的初衷。
+1637250716820549632 2023-03-19 00:32:44 +0000 <realrenmin> @zw48063535 @Daxiong17917006 同意。我觉得一方面是qkv，另一方面是language modeling预训练方式，这才是他们为什么被称为“language model”的原因
+1637248585061335042 2023-03-19 00:24:15 +0000 <realrenmin> @zw48063535 @Daxiong17917006 你给的例子非常好！ 但是这里面有一个非常细微的差别： 深度学习可以研究带有变量关系的数据，例如tabular。 但是深度学习本身不是研究变量关系的产物，所以我之前的表述也不够严谨。 what 和 what for的区别。
+1637247916187287554 2023-03-19 00:21:36 +0000 <realrenmin> @Daxiong17917006 @zw48063535 是可以处理表格的，所以这位兄弟其实给了一个很好的例子，就是tablarformer，也是很好的一篇文章。
+1637247065980903425 2023-03-19 00:18:13 +0000 <realrenmin> @noob_knight_D 傻逼
+1637245935078998018 2023-03-19 00:13:44 +0000 <realrenmin> @Daxiong17917006 @zw48063535 标记（annotation）一般是指的是做数据的labeling，目的是有data with gold referece，用来做模型的评估。 而feature是指模型的特征，发生在建模阶段。 所以标记不能算feature。
+1637242958515765251 2023-03-19 00:01:54 +0000 <realrenmin> @zw48063535 @Daxiong17917006 我觉得有必要严谨的说明统计学定义。 一般来说统计学模型是研究变量之间的关系，而在机器学习中，变量就是feature。ML中的传统统计学模型，需要做feature engineering，而在深度学习中，没有explicit的feature，研究的问题也不是feature间的关系，所以不是统计学。self attention当然不是统计学。
+1637238634544783362 2023-03-18 23:44:43 +0000 <realrenmin> cannot agree more.
+1637237535331037185 2023-03-18 23:40:21 +0000 <realrenmin> 逻辑混乱的推友就不要在此条下留言了。
+1637237307173478401 2023-03-18 23:39:27 +0000 <realrenmin> @noob_knight_D 逻辑混乱
+1637213205150720002 2023-03-18 22:03:40 +0000 <realrenmin> 🤣
+1637191491201253378 2023-03-18 20:37:23 +0000 <realrenmin> @Everyth1ngBagel @tastytatab 真诚建议，你先学好逻辑再去学CS，另外说话别像臭傻逼一样讨人厌
+1637189072308297731 2023-03-18 20:27:46 +0000 <realrenmin> @Everyth1ngBagel @tastytatab 去多读读hinton的论文，再回来讨论
+1637184322686918656 2023-03-18 20:08:54 +0000 <realrenmin> @zhongyuanyijian 太极端
+1637184231683108866 2023-03-18 20:08:32 +0000 <realrenmin> @Everyth1ngBagel @tastytatab 你啥逻辑，学校里学的就是计算机科学？
+1637144689987006464 2023-03-18 17:31:25 +0000 <realrenmin> @jiojioainio 没问题，请软件专家别冒充llm专家
+1637133013782863876 2023-03-18 16:45:01 +0000 <realrenmin> @Daxiong17917006 @zw48063535 懂！
+1637128752067952640 2023-03-18 16:28:05 +0000 <realrenmin> @kmrkgo 为高情商点赞！👍
+1637127815018446850 2023-03-18 16:24:22 +0000 <realrenmin> @zw48063535 说的没错，就是大力出奇迹。没批判真正学习的程序员，就是在批判只会api装专家的营销号。审题啊同学！
+1637124438977126406 2023-03-18 16:10:57 +0000 <realrenmin> @tastytatab 不是
+1637124406756376577 2023-03-18 16:10:49 +0000 <realrenmin> @zhongyuanyijian 代码只是实现ai的工具，不是全部
+1637123538040528897 2023-03-18 16:07:22 +0000 <realrenmin> @zw48063535 你这不是跟我观点一样么，至少说ai不完全是计算机科学，有统计学的特征。 至于说机器学习是不是统计学，是另外一个话题。 ML中可以有统计学模型，也有深度学习模型，我不觉得深度学习是统计学。 至于gpt，它当然不是在算相关性系数。只算单词关联是十年前word2vec的事。
+1637122004351369219 2023-03-18 16:01:16 +0000 <realrenmin> @kmrkgo 可能还是为了流量收割韭菜吧
+1637108474139099136 2023-03-18 15:07:30 +0000 <realrenmin> @coduao 😅
+1637107191252385796 2023-03-18 15:02:25 +0000 <realrenmin> @ThaddeusJiang 当然，可以两方面都懂，都是专家！ 这需要过程和踏踏实实的学习，不能张口就来，说些很外行的话还装专家。
+1637106776754585601 2023-03-18 15:00:46 +0000 <realrenmin> @lyz1990 @deter3 当然可以的啊，学无止境！踏踏实实的学习，只要不要像营销号不懂装懂就行
+1637083263071035395 2023-03-18 13:27:20 +0000 <realrenmin> @yihong0618 😅
+1636845481832718337 2023-03-17 21:42:28 +0000 <realrenmin> ！
+1636790831947317264 2023-03-17 18:05:19 +0000 <realrenmin> @deter3 其实，chatgpt出来之前，也还行，起码有擅长的业务领域。自那chatgpt之后，一个个就像营销号一下，不懂装懂，神烦。
+1636786678483279872 2023-03-17 17:48:48 +0000 <realrenmin> 我得摆明自己的态度了，可能会得罪人。 程序员和AI工作者，是彻彻底底的两个工种。程序员的专业就是软件工程，熟稔数据结构，语法，设计模式，以及流行的框架。 AI虽然包括了很多计算机科学的东西，但它的理论基础和框架是另外一个世界。 所以，求求你们了，程序员大佬们，不要装AI专家了。
+1636784106221756416 2023-03-17 17:38:35 +0000 <realrenmin> @deter3 实在忍不了了
+1636651294420000770 2023-03-17 08:50:50 +0000 <realrenmin> It has been never open.
+1636458102647128064 2023-03-16 20:03:10 +0000 <realrenmin> 买电器的时候只要看到有AI俩字就不买，什么AI洗衣机吸尘器电饭锅烤箱电冰箱，只买不带AI功能的产品。 为什么？稳定性！  我还是同样观点。未来谁会被淘汰？ 不是会AI的人也不是不会AI的人，是只会问chatGPT而没有真才实学的人。
+1636451705221947407 2023-03-16 19:37:44 +0000 <realrenmin> open source!
+1636451359183478792 2023-03-16 19:36:22 +0000 <realrenmin> inspiring！
+1636432347024244738 2023-03-16 18:20:49 +0000 <realrenmin> 以前，我们通过模型搭建，模型微调，调整目标函数，调高参来满足我们的需求，训练AI输出我们想要的结果。 如今，AI模型一动不动，给人类一个API，训练人们输入更好的prompt message，以输出我们想要的结果。  这是模型训练人类的开端。
+1636401755478016012 2023-03-16 16:19:16 +0000 <realrenmin> @deter3 @mtrainier2020 🥲
+1636029750903726082 2023-03-15 15:41:03 +0000 <realrenmin> @deter3 🥲🥲🥲
+1635947639328915458 2023-03-15 10:14:46 +0000 <realrenmin> 这就一下击中了gpt系列的软肋，zero shot。一般来说，zero shot是无法跟规模训练甚至微调后的模型的稳定性相比拟的，一般来说要落后50%的performance。 Zero shot，只能做到看上去很美。 zero shot
+1635947637978415104 2023-03-15 10:14:45 +0000 <realrenmin> 无论用户的产品逻辑搭的多么快，当产品成型之后，逻辑就固定下来，此时multitask就没有那么重要了。反而重要的是稳定性，可靠性。
+1635947636531376128 2023-03-15 10:14:45 +0000 <realrenmin> GPT系列的的优势在于zero shot的multi-task的能力，简言之，就是集合了问答翻译总结等等等任务于一个API让用户可劲造。 这种模式特别适合短平快的开发，用户仅凭各种prompt message就可以集合几个功能创造出一个搭积木产品？ 但是我们还是要有一个问题，那就是然后呢？
+1635742582494904322 2023-03-14 20:39:56 +0000 <realrenmin> 作为一个NLP研究人员，最近真是醉了。 刚做完实验，打了一局游戏放松一下，就发现自己的performance已经不是sota。 提笔写完introduction，发现chatgpt来了。 增加实验，要judge chatgpt的limitation，发现GPT4来了。 明明我的专业已经红透天，此刻却深深的茫然。
+1635741326959411228 2023-03-14 20:34:57 +0000 <realrenmin> 😂
+1635705769369673728 2023-03-14 18:13:40 +0000 <realrenmin> @deter3 因为墙的问题，真正的中国精英的大部分都被挡在twitter之外，这导致了twitter简体中文圈的大v要么是能翻墙的程序员，要么是常年海外的运动人士。这使得这些人拿到了话语权，并在软件圈和运动圈之外的领域也成为意见领袖，这非常不健康，而且危险，使得中简twitter整体的人格非常的单一和偏执。
+1635700912973815808 2023-03-14 17:54:22 +0000 <realrenmin> GPT-4 just launched.  https://t.co/oF20ZCyWfJ
+1635066309766696961 2023-03-12 23:52:40 +0000 <realrenmin> @deter3 谢谢捧我这么枯燥的推特！😅
+1635034028154957825 2023-03-12 21:44:24 +0000 <realrenmin> 让我们用chatgpt来检测一下我们的答案：跟他们公布的超过175billion的参数差了8billion，不过也非常接近了😅  https://t.co/0J78eiWNLH
+1635034026141700096 2023-03-12 21:44:23 +0000 <realrenmin> 我们把所有transformer层加上开始介绍的embedding和position的参数，183625187328 + 102400000 + 4194304=183731781632个参数。 简化数字，183billion参数。
+1635034024455573505 2023-03-12 21:44:23 +0000 <realrenmin> 而GPT-3共有96层transformer，所以1912762368*96，我们得到183625187328个参数。
+1635034022727520256 2023-03-12 21:44:23 +0000 <realrenmin> 另外transformer层中在算完attention和FFN之后分别要加layer norm，所以需要参数为12288*2*3为73728个参数。 所以，整个transformer block需要1912688640+73728=1912762368个参数。
+1635034021033041920 2023-03-12 21:44:22 +0000 <realrenmin> 前提到，transformer层需要2个attention层+1个FFN层： 故需要2*352333824 + 1208020992=1912688640个参数。
+1635034019288190977 2023-03-12 21:44:22 +0000 <realrenmin> FFN层：分别是12288*（4*12288+1）以及 4*12288*（12288+1）。此处第一个FFN的4是为了再次扩大维度，增加信息量。此层需要参数为1208020992。
+1635034017509838851 2023-03-12 21:44:21 +0000 <realrenmin> 此时，总结attention层的参数为 3*2048*（12288+1)+12288*12288=352333824。
+1635034015735648256 2023-03-12 21:44:21 +0000 <realrenmin> 通过attention层，词与词之间的关联被抓取。这种抓取是通过三个向量qkv做向量相乘以及加权和。 此层需要参数3*2048*（12288+1)=75503616个参数。其中12288是qkv的向量权重维度，1是bias维度。算好的attention还经过12288*12288的linnear层送往下一层FFN。
+1635034013764325376 2023-03-12 21:44:21 +0000 <realrenmin> 接下来，是transformer的核心层，在此层，有两个attention 层，外加一个前馈神经网络层FFN。基本架构是：attention -&gt; norm -&gt;attention-&gt;norm-&gt;ffn-&gt;norm
+1635034011516162049 2023-03-12 21:44:20 +0000 <realrenmin> 其次positional embedding layer: 一句话中的词汇之所以有含义是由于其位置决定，或者说词汇的语言功能和词性由其在句子中的位置决定。 于是，在input embedding之后，positional embedding用来描绘词汇的时间序列特性。 此层维度需要跟input一致，因为总参数为2048*2048=4194304
+1635034009729400833 2023-03-12 21:44:20 +0000 <realrenmin> Input embedding layer： 当我们用向量代表一个词的时候，需要多维度才能抓到这个词的语言信息。 如经典的300维word2vec公式,： vec(king)-vec(man)=vec(queen)-vec(woman) 在GPT-3中，这个纬度很高，让我们记为2048维。我们需要学习所有词汇量（记5万词汇），所以此层需要 2048*50000=102400000
+1635034007984549889 2023-03-12 21:44:19 +0000 <realrenmin> GPT大概的架构layers 如下： input embedding layer   -&gt;positional embedding   -&gt;transformer layers ( GPT3 has 96 layers) (attention -&gt; norm -&gt;attention-&gt;norm-&gt;ffn-&gt;norm)
+1635034006252326913 2023-03-12 21:44:19 +0000 <realrenmin> 这条推特解释一下动辄几千亿参数的语言模型中的参数是什么。很多人以为每个参数都是不一样，所以觉得千亿非常浩渺。但实际，现在的语言模型都是基于transformer基本模型，而每一层transformer是由基础的attention，以及前馈神经网络组成。 我尽力在这条长推特中解释GPT千亿参数中每个参数的具体位置
+1634915400873021440 2023-03-12 13:53:01 +0000 <realrenmin> @shension 谢谢你的鼓励！我会努力分享更多！
+1634911918581497858 2023-03-12 13:39:11 +0000 <realrenmin> @shension 你好！目前是大模型（堆叠transformer）+根据要生成的结果而设计的pretraining方法。是不是共识不是很清楚，但主要的组织和研究机构都是这个方向。
+1634888546111705091 2023-03-12 12:06:18 +0000 <realrenmin> @deter3 interesting！确实是跨多领域。follow你了
+1634886439040344064 2023-03-12 11:57:56 +0000 <realrenmin> @deter3 好吧， 不讨论这个话题了，哈哈！题外话，你是做心理学+tech应用的么？
+1634884777118429185 2023-03-12 11:51:20 +0000 <realrenmin> @deter3 好的，但我只同意半句。我觉得transformer不是最终解决方案，它的最终结局跟lstm一样，都会成为历史。
+1634884153790570501 2023-03-12 11:48:51 +0000 <realrenmin> @haoel 点赞。补充一下交叉熵在gpt3中的使用，gpt3主要的预训练任务是给上句，接下句。把gpt3生成的token sequence跟原本的sequence做对比，在训练过程中把降低交叉熵loss作为目标，在大量文本训练下，gpt3获得了随意给上句，就能接下茬的能力，这也是chatgpt的基础。
+1634876423864459268 2023-03-12 11:18:08 +0000 <realrenmin> @deter3 谢谢评论，我觉得挺好的。 我的观点是，chatgpt是现象级并具有极强网红属性，所以才能从nlp学术出圈，被大众讨论。但是大众理解往往不够全面，有技术背景的程序员也停留在api层面，这就是互联网思维。nlp出圈对我们来说是好事，提高它的可靠性和透明度，才会对跨领域更加有益，所以我们关注limitation
+1634873858833657859 2023-03-12 11:07:57 +0000 <realrenmin> @deter3 用chatgpt研究心理学，挺好奇的，请给我一个链接看看，谢谢！ NLP的很多问题就是没有解决，所以需要学术研究一点点推进，现在的chatgpt就是多年nlp进步的一个实例。你说的跨语言问题是一个单独的nlp研究问题，大家正在研究它，推进它。 我说chatgpt爱好者并不是贬义词，只是说思维是互联网模式而已。
+1634870954110210049 2023-03-12 10:56:24 +0000 <realrenmin> @deter3 这个格局确实打不开。。😅
+1634868645913559045 2023-03-12 10:47:14 +0000 <realrenmin> @shension 笑死🤣🤣🤣
+1634866332738134016 2023-03-12 10:38:02 +0000 <realrenmin> 果然，自己都讳莫如深  https://t.co/AvC2kggMkR
+1634858720743026689 2023-03-12 10:07:47 +0000 <realrenmin> @haoel 点赞收藏！
+1634857813087338497 2023-03-12 10:04:11 +0000 <realrenmin> @haoel 谢谢hao哥，我刚才也反思直接说一万倍显的特讨厌。以后不说这么不营养的话了。 等我写好文章分享给你！
+1634854668949155840 2023-03-12 09:51:41 +0000 <realrenmin> @haoel 我在自己的推特中发了一篇简短的对大型语言模型的总结，希望大家去看！
+1634849729157926912 2023-03-12 09:32:04 +0000 <realrenmin> 结果，如果是现在下结论说chatgpt就是ai的未来或者顶峰，那就等同于说transformer+autoregressive预训练就是ai的终结，这显而易见是错误。 未来，nlp的发展的突破，在于打破transformer的垄断，以及新的更加接近人类认知的预训练方法的提出。 chatgpt不是神，未来的nlp模型一定比chatgpt更加优秀。
+1634849061261185027 2023-03-12 09:29:24 +0000 <realrenmin> 所以总结来说，目前NLP大型语言模型LLM中，大概有三类，encoder（如bert）, decoder (如gpt)，以及encoder-decoder（如bart）。而无论是什么那一类，都逃不开谷歌17年开源的基础模型，transformer。所以再次总结，目前所有LLM都是transformer的堆叠。
+1634848433310924800 2023-03-12 09:26:55 +0000 <realrenmin> 那么，有没有BERT+GPT的模型呢？答案是肯定的，即BART，encoder是BERT, decoder是GPT。此encoder-decoder架构获得了NLP多任务的成功。
+1634847878467424256 2023-03-12 09:24:42 +0000 <realrenmin> 这使得GPT的具有非凡的接话茬能力，但其巨大的limitation也再次，仅仅会接话茬。 而我们看另外一个种语言模型BERT，在预训练过程中，采用了masked language modeling的方式，即完形填空。所以BERT具有对句子段落文章整体理解的能力，因此BERT常用于分类，回归等整体语言理解的任务，而生成文字能力不强
+1634846985856626688 2023-03-12 09:21:10 +0000 <realrenmin> chatGPT或者其他GPT是不是nlp的全部或者未来？ 答案是否定的，GPT family models的局限性在与generative。 一个语言模型，如何拥有了generative的能力，关键在于其预训练过程。 GPT的预训练过程，使用的是autoregressive的方式，换成人话，就是如何让GPT会接话茬，给出上句，接下句。
+1634840811946016768 2023-03-12 08:56:38 +0000 <realrenmin> @haoel 在此条下想再分享一下什么是masked language modeling，就是我们的完形填空。在大量语料中，随机掩盖部分token，然后让语言模型预测出该token。这种训练下，BERT获得了给定任意句子完成填空的语言能力。希望你以后多挂我，我也可以多分享。
+1634825052016242689 2023-03-12 07:54:00 +0000 <realrenmin> NLP学术和chatGPT爱好者共同点是对NLP任务有巨大热情，差异点在于前者倾向于看到limitation，后者看到巨大的互联网价值。 所以本质上，一个是研究员思维，一个是互联网思维。 都没什么错，都有局限性。
+1634820810639659010 2023-03-12 07:37:09 +0000 <realrenmin> @wwwws26261626 @haoel 你理解反了，阅读原文是最慢的，但这是超越理解API的唯一方式
+1634817238250188801 2023-03-12 07:22:57 +0000 <realrenmin> @PenngXiao @haoel 看了@跑了
+1634816542226382849 2023-03-12 07:20:11 +0000 <realrenmin> @haoel 是一个比喻的说法，真诚建议，没别的意思
+1634815949923659776 2023-03-12 07:17:50 +0000 <realrenmin> @haoel 一万倍是一种比喻说法，表达的意思是原论文真的比这些中文书好！例如bert的原论文，重点在于它如何在预训练阶段用masked language modeling使得BERT拥有了bidiractional的context阅读能力，这才是BERT中的B的含义，我确实是真诚的建议而已，没有别的意思
+1634641386191351808 2023-03-11 19:44:11 +0000 <realrenmin> @onlygravel @Fenng 确实，很生气但也拿chatgpt没啥办法，只能拿chatgpt做baseline，在某些情况下讨论它的局限性。但这也增加了它的引用和学术热度，俩字，无奈😂
+1634623316983185408 2023-03-11 18:32:23 +0000 <realrenmin> @Fenng 我是做NLP研究的，天天看这些围绕ChatGPT的讨论……😂
+1634444988665790464 2023-03-11 06:43:46 +0000 <realrenmin> @dykaknsjwkmsmwm AI的主要库都是python的，pytorch, huggingface，现在的AI算法哪个是用C++？招会C++的AI公司大概率是套壳傻逼
+1634441237364129793 2023-03-11 06:28:52 +0000 <realrenmin> @haoel 直接看BERT原论文，看透了的收获比这些中文书好一万倍
+1634250633275400192 2023-03-10 17:51:28 +0000 <realrenmin> @Svwang1 说得非常对，实际上目前的数据基本已经用完了
+1634143106420408320 2023-03-10 10:44:12 +0000 <realrenmin> @jojjeols Even no one dares to abstain.
+1634111681931378690 2023-03-10 08:39:19 +0000 <realrenmin> 最近做了一个小的项目，比较了一下chatgpt和llama。llama的输出还是raw autoagressive的，因而输出格式杂乱，而chatgpt的输出非常规范。这说明gpt-3.5-turbo是一个骗人的名字，chatgpt绝不是一个model，而是一个product。在对外一个api之下，有太多隐藏的东西，这可能就是它不愿意开源的原因。
+1634102953144360960 2023-03-10 08:04:38 +0000 <realrenmin> 还没有搜到相关的论文，等出来研读后，写一篇真正的科普分享给大家。
+1634093881502384129 2023-03-10 07:28:36 +0000 <realrenmin> 有生活气！
+1633923046795771904 2023-03-09 20:09:45 +0000 <realrenmin> 才发现推特的list功能非常好。把关注的推特账号按照中文，英文，瑞典语，政治光谱进行了分类，然后刷推的时候，每个list都看一下，这样既训练了多语言思维，又看到了不同的观点和有趣的内容。
+1633811334671245313 2023-03-09 12:45:51 +0000 <realrenmin> @luyu_gao We are actually a four-way classifier and the fourth one is to find alternatives for GPT family models
+1633807098441080832 2023-03-09 12:29:01 +0000 <realrenmin> @yihong0618 点赞这份清醒！
+1633806469769338888 2023-03-09 12:26:31 +0000 <realrenmin> 所以， please go beyond the fucking API！
+1633806317633650689 2023-03-09 12:25:55 +0000 <realrenmin> 随着chatgpt的出现，nlp学者们怅然若失，更有部分nlp研究人员觉得没什么可以做的了。我反而觉得这是nlp的新开始，对nlp研究人员来说是巨大的机会。如果以后所有的网站和公司都要chatgpt一遍，那么一个新的职位nlp advocate就会出现，这个职位只有专业的nlp研究人员可以胜任。
+1633798461014376449 2023-03-09 11:54:42 +0000 <realrenmin> 忘加一条： instruct LM。直接将inference由code转到自然语言，再次降低api使用门槛。
+1633797403160584192 2023-03-09 11:50:30 +0000 <realrenmin> ChatGPT为何成功？ 1: zero-shot。用户不必train，fintune，只需inference。 2: api。用户不必mlops，不必上云部署，不必自己写api，不必做load balancing。只需调用API。  就具体NLP任务而言，chatGPT无法评估，但定不是SOTA。 所以，这不是AI的成功，这是商业的成功。
+1633729039759278085 2023-03-09 07:18:50 +0000 <realrenmin> @haoel 我的观点是，谷歌没有想到chatGPT这么经不起推敲的东西会爆火。chatGPT说到底就是一个zero shot，意味着它的benchmark并不行，但大众不管benchmark。chatGPT说白了就是狗狗币，网红meme，马斯克的最爱
+1633725752628707328 2023-03-09 07:05:47 +0000 <realrenmin> @xicilion 说的太对了，“看得过去”但并不经得起推敲，这些拍脑袋的东西最后都会死掉，一帮号称ai的产品，扒开皮表就是前后端搭建
+1633725006839439367 2023-03-09 07:02:49 +0000 <realrenmin> @lidangzzz 立党，你不要搞黄色了，出来管管那些chatgpt神棍吧
+1633213464419106816 2023-03-07 21:10:08 +0000 <realrenmin> 我最讨厌chatgpt的一点就是，张口就来，恰如推上的专家们，说出一个论断几乎没有任何责任感。正在写一篇chatgpt的论文，系统的设计实验分析它的qa表现，benchmark表现可以说是一塌糊涂。chatgpt看上去很美，乍一看挺好，但完全经不起推敲。
+1633186275002916866 2023-03-07 19:22:05 +0000 <realrenmin> @SpokespersonCHN 打败法西斯日本主要是国军
+1633105534483136524 2023-03-07 14:01:15 +0000 <realrenmin> @SpokespersonCHN ........
+1633078305862696960 2023-03-07 12:13:03 +0000 <realrenmin> Elevated error rates on all models. maybe due to this ?  https://t.co/cvx8SKhxy1
+1633072930581086209 2023-03-07 11:51:42 +0000 <realrenmin> Is there something wrong with chatgpt API? I keep getting 500 errors.
+1633053046065209345 2023-03-07 10:32:41 +0000 <realrenmin> @Blankwonder 外语学习绝对不会成为历史。chatgpt只会让学不好英语的人更加快速放弃英语，而让有决心学好英语的人更加优秀。最极致情况，未来的世界只有两种人，只会依赖chatgpt的人和有真才实学的人，人与人之间的差距会越来越大。
+1632753270530752512 2023-03-06 14:41:29 +0000 <realrenmin> @haoel 因为这句话，坚决follow你
+1632688357099597824 2023-03-06 10:23:32 +0000 <realrenmin> @tinyfool 早日康复！
+1632394971222355970 2023-03-05 14:57:44 +0000 <realrenmin> chatgpt在搜索编程问题的时候，用户体验超越谷歌，不是因为结果多么准确，而是因为谷歌的搜索结果页面点进去各种GDRP的条款让人点来点去，完全受不了。
+1632343059407990784 2023-03-05 11:31:27 +0000 <realrenmin> @toopowerful @yuxiyou 有趣，希望你能有所突破！
+1632342584021381121 2023-03-05 11:29:34 +0000 <realrenmin> ChatGPT是现象级的，但它的网红属性催生了泡沫和骗子套壳公司。NLP还是会不断向前发展，只有踏踏实实的做真正AI的公司，才会活的长久/
+1632341717398503424 2023-03-05 11:26:07 +0000 <realrenmin> chatGPT套壳的所有小项目都会死掉，为什么？因为门槛太低了，全部依赖一个API，在而完全不管API之下是什么，是不是可靠。这种前提下，这种项目的本质完全不是AI，而是纯粹的前后端搭建。门槛如此之低，大一点的公司随便集成一个feature就会灭掉独立开发者。
+1632340064830214146 2023-03-05 11:19:33 +0000 <realrenmin> @toopowerful @yuxiyou chatgpt无法改变任何weight，因为它只暴露给用户一个API。如果要改变weight，就是在某一个具体任务做finetune，把LLM当作基础embedding，在微调中学习新的关系。但恕我直言，这并不创新，而且更加没有逃离反向传导，更不是发生在inference阶段。微调的本质就是反向传导训练
+1632295381986934785 2023-03-05 08:22:00 +0000 <realrenmin> @toopowerful @yuxiyou 前两句同意，基于back propagation的网络不能解决这个问题，当然也就不会是ai的终极解决方案。你的最后一句，我没看懂，请解释下‘在inference中学习新的关系’？
+1632061621861228545 2023-03-04 16:53:07 +0000 <realrenmin> @weedmanisu @yuxiyou 对，大力出奇迹，其实没啥创新的
+1632044350031970305 2023-03-04 15:44:29 +0000 <realrenmin> @yuxiyou 本质还是transformer架构的限制，17年transformer诞生时，它解决了LSTM遇见长sequence梯度爆炸的问题，得以实现更长context，但因为position embedding的限制，context依然受限。chatgpt不过是超过96层的transformer炒冷饭堆叠。未来一定有更优秀的网络架构出现来解决此问题
+1629975134235656194 2023-02-26 22:42:10 +0000 <realrenmin> @tinyfool @YouTube 叹为观止，居然用超大语言模型做陈旧的LDA？看傻了，图个啥？这感觉就像用xspace火箭点烟
+1628143013384929282 2023-02-21 21:21:58 +0000 <realrenmin> @SpokespersonCHN bullshit
+1624392062668881920 2023-02-11 12:57:02 +0000 <realrenmin> @wuyuesanren 瑞典，一年20万人民币。
+1601177258433318914 2022-12-09 11:29:41 +0000 <realrenmin> @jojjeols jag pluggar svenska på doulinguo varje dag
+1597914121890332673 2022-11-30 11:23:09 +0000 <realrenmin> @jojjeols nothing else
+1596764461339070466 2022-11-27 07:14:48 +0000 <realrenmin> @dinglingxue39 @realEmperorPooh 傻逼玩意，操你妈的
+1596472960189169665 2022-11-26 11:56:29 +0000 <realrenmin> @lnshui14 @GFWfrog 傻逼
+1590828646507646976 2022-11-10 22:08:00 +0000 <realrenmin> 漂亮的中国人，勤奋的中国人，可怜的中国人。
+1585523398595297281 2022-10-27 06:46:50 +0000 <realrenmin> @jojjeols 扬汤止沸，抱薪救火，漏脯充饥，饮鸩止渴
+1584101380599721984 2022-10-23 08:36:14 +0000 <realrenmin> @jojjeols Ekonomisk tillväxt är CCPs legitimitet, och denna legitimitet erkänns också av västvärlden.  När ekonomin slutar växa och Kina återgår till fattiga länders led, är det Nordkorea och Venezuela. Money Rules.
+1584096773689090048 2022-10-23 08:17:56 +0000 <realrenmin> @DeltaGnoll Agree, the simple truth is that Sweden is the least racist country in the world. And it is also a sad truth that there are individuals who are racist, however not only in Sweden but also in all countries. One thing for sure: there is no systematic  racism in Sweden.
+1583822872144855040 2022-10-22 14:09:33 +0000 <realrenmin> @EiadAldroubi1 ‘literally’? why are you so fucking stupid to interpret a normal option into something blaming her?
+1583821473394741248 2022-10-22 14:03:59 +0000 <realrenmin> @EiadAldroubi1 who the fuck told you i am saying against her? I am simply writing my opinion with swedes, who the fuck are you to write f*word yo me?
+1583817002036391936 2022-10-22 13:46:13 +0000 <realrenmin> @MonkeyShaman yet not a country are improved simply by no man. The improvements are a result of yes and no, we call it democracy. we should be open to discuss and free speech, that is the only way to discover truth. nickedockor and civilkurage are extreme, and that means or solves nothing.
+1583765262700261377 2022-10-22 10:20:38 +0000 <realrenmin> 国运，捩乎而过
+1574692862293381121 2022-09-27 09:30:09 +0000 <realrenmin> @HAOHONG_CFA 人民的概念本身就值得讨论。因为人民本就是一个政治概念，人民的对立面是敌人或叫反革命分子。而谁是人民，却由当权者甚至独裁者决定。人民享有社会财产的分配，而敌人的财产土地被分配。土改，文革都是极权者定义人民的产物，人民革非人民的命，人民打倒非人民。
+1570490328582615041 2022-09-15 19:10:47 +0000 <realrenmin> @anders_aslund indeed
+1570490061367676929 2022-09-15 19:09:43 +0000 <realrenmin> @McFaul indeed, not a single word of Ukraine. Xi is clear that Putin will be defeated.
+1569964739488276480 2022-09-14 08:22:17 +0000 <realrenmin> @yedaliang @wangxiaoshan 印象深刻，夏雨被李冰冰耍了
+1565707840282677248 2022-09-02 14:26:53 +0000 <realrenmin> @wangxiaoshan 岛枫感觉还行
+1555495516007530496 2022-08-05 10:06:45 +0000 <realrenmin> @wangxiaoshan 瑞典移民局最不好惹了
+1554723500350373888 2022-08-03 06:59:02 +0000 <realrenmin> 女性荣光！
+1536980525151289346 2022-06-15 07:54:47 +0000 <realrenmin> @chonglingw 再看一下广西文革的有组织性吃人事件，这个政府让我毛骨悚然
+1534085646419210242 2022-06-07 08:11:34 +0000 <realrenmin> @lidangzzz 文盲
+1531690800928927744 2022-05-31 17:35:19 +0000 <realrenmin> @wangdan1989 那是最后一代有抗争精神的学生。之后抗争精神就被阉割了。但学生和政府的恶行互动，葬送了八十年代政体改革，一个更好的中国之路被暂时堵死。我们相信，凭借中国人的勤劳勇敢，如果有民主的制度，我们县县都是新加坡，省省都是台湾。 悲哀。
+1530450202850631681 2022-05-28 07:25:37 +0000 <realrenmin> @lidangzzz 一群文盲
+1530197805486288896 2022-05-27 14:42:41 +0000 <realrenmin> @realcaixia 八九之后，抗争的精神已经被阉割，现在学生更在乎的是保研评优资格
+1530117954905550848 2022-05-27 09:25:23 +0000 <realrenmin> @lidangzzz 同感，说到底，还是因为中文时政圈整体文化水平不高，文盲率太高
+1529115314058932227 2022-05-24 15:01:15 +0000 <realrenmin> @SITbuHNVQoDXnT5 继续骂你这贱逼，到我的推特里犯贱，操你妈
+1525846263828193281 2022-05-15 14:31:12 +0000 <realrenmin> @wangzhian8848 王局确实吊打一众没文化自媒体人
+1522995170865991680 2022-05-07 17:41:59 +0000 <realrenmin> @sayid8964 其实有了，Render
+1522436786399625218 2022-05-06 04:43:10 +0000 <realrenmin> @wangwatchworld 瑞典免费
+1522124510908010496 2022-05-05 08:02:17 +0000 <realrenmin> @lidangzzz 一会去试试你的hhlab！ 我平时都用singularity容器，虽然对技术人员来说非常方便，但对非技术人员来说需要学习曲线
+1500210827504332802 2022-03-05 20:45:08 +0000 <realrenmin> @laodeng89 能弄清楚新闻来源再发么，搞得中文twitter真假新闻分不清楚
+[!] No more data! Scraping will stop now.
+found 0 deleted tweets in this search.
+['twitter'] poster drawer done in `OUT_FOLDER`
